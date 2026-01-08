@@ -21,11 +21,13 @@ import { useState } from "react"
 export default function NavShell({
     children,
     businessName,
-    userEmail
+    userEmail,
+    activeOrdersCount = 0
 }: {
     children: React.ReactNode
     businessName: string
     userEmail: string
+    activeOrdersCount?: number
 }) {
     const pathname = usePathname()
     const router = useRouter()
@@ -45,104 +47,126 @@ export default function NavShell({
     ]
 
     return (
-        <div className="flex min-h-screen w-full flex-col">
-            {/* HEADER / TOP NAV */}
-            <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-10">
-                <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-                    {/* DESKTOP LOGO AREA */}
-                    <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-                        {/* Try to load logo.png, fallback to Icon if missing */}
-                        <div className="relative h-16 w-16 overflow-hidden rounded-md">
-                            <Image
-                                src="/logo.png"
-                                alt="Logo"
-                                fill
-                                className="object-cover"
-                                onError={(e) => {
-                                    
-                                }}
-                            />
+        <div className="flex min-h-screen w-full bg-slate-50/50">
+            {/* DESKTOP SIDEBAR */}
+            <aside className="hidden border-r bg-white w-[250px] flex-col md:flex fixed h-full inset-y-0 z-30">
+                <div className="h-16 flex items-center px-6 border-b">
+                    <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
+                        <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+                            <Scissors className="h-5 w-5 text-primary" />
                         </div>
-                        
-
-                        
+                        <span>Ryvix</span>
                     </Link>
+                </div>
 
-                    {/* NAVIGATION LINKS */}
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`transition-colors hover:text-foreground ${pathname === item.href ? "text-foreground font-bold" : "text-muted-foreground"
-                                }`}
-                        >
-                            {item.name}
-                        </Link>
-                    ))}
-                </nav>
-
-                {/* MOBILE MENU (SHEET) */}
-                <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-                            <Menu className="h-5 w-5" />
-                            <span className="sr-only">Toggle navigation menu</span>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left">
-                        <SheetTitle className="sr-only">Navigation</SheetTitle>
-                        <nav className="grid gap-6 text-lg font-medium">
-                            <Link href="#" className="flex items-center gap-2 text-lg font-semibold">
-                                <Package2 className="h-6 w-6" />
-                                <span>{businessName}</span>
-                            </Link>
-                            {navItems.map((item) => (
+                <div className="flex-1 overflow-y-auto py-6 px-4">
+                    <nav className="grid gap-2 text-sm font-medium">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href
+                            return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`flex items-center gap-4 hover:text-foreground ${pathname === item.href ? "text-foreground font-bold" : "text-muted-foreground"
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive
+                                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                                        : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
                                         }`}
                                 >
-                                    <item.icon className="h-5 w-5" />
+                                    <item.icon className="h-4 w-4" />
                                     {item.name}
+                                    {item.name === 'Orders' && activeOrdersCount > 0 && (
+                                        <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                            {activeOrdersCount}
+                                        </span>
+                                    )}
                                 </Link>
-                            ))}
-                        </nav>
-                    </SheetContent>
-                </Sheet>
-
-                {/* USER DROPDOWN (RIGHT SIDE) */}
-                <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-                    <div className="ml-auto flex-1 sm:flex-initial">
-                        {/* Search bar placeholder */}
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="secondary" size="icon" className="rounded-full">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src="" />
-                                    <AvatarFallback>{userEmail?.[0]?.toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <span className="sr-only">Toggle user menu</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>{businessName}</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
-                                <LogOut className="mr-2 h-4 w-4" /> Log Out
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                            )
+                        })}
+                    </nav>
                 </div>
-            </header>
 
-            {/* MAIN CONTENT AREA */}
-            <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-8">
-                {children}
-            </main>
+
+            </aside>
+
+            {/* MAIN CONTENT WRAPPER */}
+            <div className="flex-1 flex flex-col md:ml-[250px] min-h-screen">
+                {/* HEADER */}
+                <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b bg-white px-6">
+                    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="md:hidden -ml-2">
+                                <Menu className="h-5 w-5" />
+                                <span className="sr-only">Toggle navigation menu</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="p-0 w-[280px]">
+                            {/* Mobile Sidebar Content */}
+                            <div className="h-full flex flex-col">
+                                <div className="h-16 flex items-center px-6 border-b">
+                                    <span className="font-bold text-xl text-primary">Ryvix</span>
+                                </div>
+                                <div className="flex-1 py-6 px-4">
+                                    <nav className="grid gap-2 text-sm font-medium">
+                                        {navItems.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                onClick={() => setIsOpen(false)}
+                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${pathname === item.href
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "text-muted-foreground hover:bg-slate-100"
+                                                    }`}
+                                            >
+                                                <item.icon className="h-4 w-4" />
+                                                {item.name}
+                                            </Link>
+                                        ))}
+                                    </nav>
+                                </div>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+
+                    {/* SEARCH BAR (Visible on Desktop) */}
+                    <div className="w-full flex-1 md:w-auto md:flex-none">
+                        <div className="relative hidden md:block w-96">
+                            {/* Icons would go here */}
+                        </div>
+                    </div>
+
+                    {/* RIGHT SIDE HEADER ACTIONS */}
+                    <div className="ml-auto flex items-center gap-4">
+                        <Button variant="ghost" size="sm" className="hidden md:flex gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:bg-slate-200 h-auto">
+                            <span>Select Date</span>
+                        </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="secondary" size="icon" className="rounded-full h-9 w-9">
+                                    <Avatar className="h-9 w-9 border-2 border-white">
+                                        <AvatarImage src="" />
+                                        <AvatarFallback className="bg-indigo-100 text-indigo-700">{userEmail?.[0]?.toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="sr-only">Toggle user menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>{businessName}</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Settings</DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
+                                    <LogOut className="mr-2 h-4 w-4" /> Log Out
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </header>
+
+                {/* PAGE CONTENT */}
+                <main className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
+                    {children}
+                </main>
+            </div>
         </div>
     )
 }

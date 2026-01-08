@@ -1,70 +1,87 @@
 import { createClient } from '@/utils/supabase/server'
 import NavShell from '@/components/nav-shell'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { OrdersTable } from '@/components/orders-table' // <--- Now using the smart table component
+import { Card, CardContent } from "@/components/ui/card"
+import { OrdersTable } from '@/components/orders-table'
 
 export default async function OrdersPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) return <div>Please log in</div>
+    if (!user) return <div>Please log in</div>
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tenant_id, tenants(business_name)')
-    .eq('id', user.id)
-    .single()
-    
-  // @ts-ignore
-  const businessName = profile?.tenants?.business_name || 'Stitchly'
-  const tenantId = profile?.tenant_id
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, tenants(business_name)')
+        .eq('id', user.id)
+        .single()
 
-  // Fetch ALL orders with client details
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('*, clients(name, email)')
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false })
+    // @ts-ignore
+    const businessName = profile?.tenants?.business_name || 'Stitchly'
+    const tenantId = profile?.tenant_id
 
-  const allOrders = orders || []
+    // Fetch ALL orders with client details
+    const { data: orders } = await supabase
+        .from('orders')
+        .select('*, clients(name, email)')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
 
-  // Filter into groups
-  const activeOrders = allOrders.filter(o => o.status !== 'delivered' && o.status !== 'ready')
-  const completedOrders = allOrders.filter(o => o.status === 'delivered' || o.status === 'ready')
+    const allOrders = orders || []
 
-  return (
-    <NavShell businessName={businessName} userEmail={user.email || ''}>
-      
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground">Manage and track all production.</p>
-        </div>
-      </div>
+    // Filter into groups
+    const activeOrders = allOrders.filter(o => o.status !== 'delivered' && o.status !== 'ready')
+    const completedOrders = allOrders.filter(o => o.status === 'delivered' || o.status === 'ready')
 
-      <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="active">Active ({activeOrders.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completedOrders.length})</TabsTrigger>
-          <TabsTrigger value="all">All Orders ({allOrders.length})</TabsTrigger>
-        </TabsList>
+    // Calculate active count for sidebar
+    const activeOrdersCount = activeOrders.length
 
-        {/* ACTIVE ORDERS TAB */}
-        <TabsContent value="active" className="space-y-4">
-           {/* Now uses the search-enabled table */}
-           <OrdersTable orders={activeOrders} />
-        </TabsContent>
+    return (
+        <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount}>
 
-        {/* COMPLETED ORDERS TAB */}
-        <TabsContent value="completed" className="space-y-4">
-           <OrdersTable orders={completedOrders} />
-        </TabsContent>
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Orders</h2>
+                        <p className="text-muted-foreground">Manage and track all production.</p>
+                    </div>
+                </div>
 
-        {/* ALL ORDERS TAB */}
-        <TabsContent value="all" className="space-y-4">
-           <OrdersTable orders={allOrders} />
-        </TabsContent>
-      </Tabs>
-    </NavShell>
-  )
+                <Tabs defaultValue="active" className="space-y-4">
+                    <TabsList className="bg-slate-100 p-1 rounded-xl w-full flex-wrap h-auto justify-start">
+                        <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">Active ({activeOrders.length})</TabsTrigger>
+                        <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">Completed ({completedOrders.length})</TabsTrigger>
+                        <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">All ({allOrders.length})</TabsTrigger>
+                    </TabsList>
+
+                    {/* ACTIVE ORDERS TAB */}
+                    <TabsContent value="active">
+                        <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                            <CardContent className="p-0">
+                                <OrdersTable orders={activeOrders} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* COMPLETED ORDERS TAB */}
+                    <TabsContent value="completed">
+                        <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                            <CardContent className="p-0">
+                                <OrdersTable orders={completedOrders} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* ALL ORDERS TAB */}
+                    <TabsContent value="all">
+                        <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                            <CardContent className="p-0">
+                                <OrdersTable orders={allOrders} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </NavShell>
+    )
 }

@@ -1,12 +1,15 @@
 import { createClient } from '@/utils/supabase/server'
 import NavShell from '@/components/nav-shell'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Scissors, AlertCircle, CheckCircle2, ArrowUpRight } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import Link from 'next/link'
-import { PendingPaymentsSheet } from '@/components/pending-payments-sheet' 
+import { PendingPaymentsSheet } from '@/components/pending-payments-sheet'
 import { RecentOrders } from '@/components/recent-orders'
-import { RevenueChart } from '@/components/revenue-chart' // <--- IMPORT THIS
+import { RevenueChart } from '@/components/revenue-chart'
+import { PendingPaymentsWidget } from '@/components/pending-payments-widget'
+import { DashboardStats } from '@/components/dashboard-stats'
+import { Button } from "@/components/ui/button"
+import { ChevronDown, RefreshCw, MoreHorizontal, Scissors, ArrowUpRight } from 'lucide-react'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -39,26 +42,28 @@ export default async function Dashboard() {
       .order('created_at', { ascending: false }),
     supabase
       .from('orders')
-      .select('*, clients(name, email)') 
+      .select('*, clients(name, email)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(5),
     // F. Fetch ALL orders for the Chart
     supabase
-        .from('orders')
-        .select('created_at, paid_amount')
-        .eq('tenant_id', tenantId)
+      .from('orders')
+      .select('created_at, paid_amount')
+      .eq('tenant_id', tenantId)
   ])
 
   const totalClients = clientsResult.count || 0
   const activeOrders = activeOrdersResult.count || 0
   const completedOrders = completedOrdersResult.count || 0
-  const pendingOrders = (financialResult.data || []) as any 
+  const pendingOrders = (financialResult.data || []) as any
   const recentOrders = recentOrdersResult.data || []
+  // Calculate counts for passing to components
+  const activeOrdersCount = activeOrders;
 
   // --- CHART DATA PROCESSING ---
   const allOrders = allOrdersResult.data || []
-  
+
   // 1. Initialize months
   const monthlyData = [
     { name: "Jan", total: 0 }, { name: "Feb", total: 0 }, { name: "Mar", total: 0 },
@@ -72,87 +77,64 @@ export default async function Dashboard() {
     const date = new Date(order.created_at)
     const monthIndex = date.getMonth() // 0 = Jan, 1 = Feb...
     const amount = order.paid_amount || 0
-    
-    // Only count current year? (Optional: remove this if if you want all-time by month)
+
+    // Only count current year?
     if (date.getFullYear() === new Date().getFullYear()) {
-        monthlyData[monthIndex].total += amount
+      monthlyData[monthIndex].total += amount
     }
   })
   // -----------------------------
 
   return (
-    <NavShell businessName={businessName} userEmail={user.email || ''}>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        
-        {/* METRIC CARDS */}
-        <Link href="/clients" className="block">
-            <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{totalClients}</div>
-                <p className="text-xs text-muted-foreground">Saved profiles</p>
-            </CardContent>
-            </Card>
-        </Link>
+    <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount}>
+      <div className="flex flex-col gap-6">
 
-        <Link href="/orders" className="block">
-            <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full border-l-4 border-l-blue-500/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-                <Scissors className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{activeOrders}</div>
-                <p className="text-xs text-muted-foreground">In production</p>
-            </CardContent>
-            </Card>
-        </Link>
+        {/* TOP HEADER / WELCOME */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Welcome back, {profile?.full_name?.split(' ')[0] || 'User'}!</h2>
+            <p className="text-muted-foreground">Here is your daily activity.</p>
+          </div>
+          {/* Right side header actions if any */}
+        </div>
 
-        <Link href="/orders" className="block">
-            <Card className="hover:bg-slate-50 transition-colors cursor-pointer h-full border-l-4 border-l-green-500/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{completedOrders}</div>
-                <p className="text-xs text-muted-foreground">Delivered jobs</p>
-            </CardContent>
-            </Card>
-        </Link>
+        {/* METRIC CARDS ROW */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <DashboardStats
+            totalRevenue={monthlyData.reduce((acc, curr) => acc + curr.total, 0)}
+            activeOrders={activeOrders}
+            completedOrders={completedOrders}
+            totalClients={totalClients || 0}
+          />
+        </div>
 
-        <PendingPaymentsSheet orders={pendingOrders} />
-
-      </div>
-
-      {/* CHARTS & RECENT ORDERS SECTION */}
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-7 mt-4">
-         
-         {/* CHART (Takes up 4 columns) */}
-         <div className="xl:col-span-4">
+        {/* CHARTS ROW */}
+        <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-7 h-full">
+          {/* Main Chart */}
+          <div className="md:col-span-2 lg:col-span-5">
             <RevenueChart data={monthlyData} />
-         </div>
+          </div>
 
-         {/* RECENT ORDERS (Takes up 3 columns) */}
-         <Card className="xl:col-span-3 h-full">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="grid gap-2">
-                <CardTitle>Recent Orders</CardTitle>
-                <p className="text-sm text-muted-foreground">Latest transactions.</p>
-              </div>
-              <Link href="/clients">
-                <Badge variant="outline" className="flex items-center gap-1 cursor-pointer">
-                    View All <ArrowUpRight className="h-3 w-3" />
+          {/* Pending Payments Widget (Replaces Sales Map) */}
+          <PendingPaymentsWidget orders={pendingOrders} />
+        </div>
+
+        {/* BOTTOM ROW (Recent Orders only) */}
+        <div className="grid gap-6 md:grid-cols-1">
+          <Card className="shadow-sm border-none bg-white">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Recent Orders</CardTitle>
+              <Link href="/orders">
+                <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 cursor-pointer">
+                  View All
                 </Badge>
               </Link>
             </CardHeader>
-            <CardContent>
-               <RecentOrders orders={recentOrders} />
+            <CardContent className="px-2">
+              <RecentOrders orders={recentOrders} />
             </CardContent>
-         </Card>
+          </Card>
+        </div>
       </div>
     </NavShell>
   )
