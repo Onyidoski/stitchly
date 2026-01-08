@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUpRight, Scissors, Info } from "lucide-react"
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts"
+import { Area, AreaChart, ResponsiveContainer } from "recharts"
+import Link from "next/link"
 
 // --- Mock Data for Sparklines ---
 const sparkData1 = [
@@ -25,7 +26,7 @@ export function DashboardStats({
 }) {
     return (
         <>
-            {/* 1. Total Revenue Card */}
+            {/* 1. Total Revenue Card (Not linked per instruction, but can be if needed) */}
             <Card className="rounded-3xl border-none shadow-sm bg-white overflow-hidden relative">
                 <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -41,7 +42,6 @@ export function DashboardStats({
                         All time income
                     </div>
 
-                    {/* Tiny Chart Background Effect */}
                     <div className="h-[60px] w-full absolute bottom-0 left-0 right-0 opacity-20">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={sparkData1}>
@@ -58,74 +58,79 @@ export function DashboardStats({
                 </CardContent>
             </Card>
 
-            {/* 2. Active Jobs Card */}
-            <Card className="rounded-3xl border-none shadow-sm bg-white overflow-hidden relative">
-                <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Active Jobs</CardTitle>
-                        <div className="p-1 rounded-full bg-orange-100">
-                            <Scissors className="h-3 w-3 text-orange-600" />
+            {/* 2. Active Jobs Card -> Links to Active Tab */}
+            <Link href="/orders?tab=active" className="block cursor-pointer transition-transform hover:scale-[1.02]">
+                <Card className="rounded-3xl border-none shadow-sm bg-white overflow-hidden relative h-full">
+                    <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Active Jobs</CardTitle>
+                            <div className="p-1 rounded-full bg-orange-100">
+                                <Scissors className="h-3 w-3 text-orange-600" />
+                            </div>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-3xl font-bold mb-1">{activeOrders}</div>
-                    <div className="text-xs text-muted-foreground">
-                        In Production
-                    </div>
-
-                    {/* Tiny Chart Background Effect */}
-                    <div className="h-[60px] w-full absolute bottom-0 left-0 right-0 opacity-20">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={sparkData2}>
-                                <defs>
-                                    <linearGradient id="colorGradient2" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <Area type="monotone" dataKey="value" stroke="#f97316" fill="url(#colorGradient2)" strokeWidth={2} />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* 3. Completed Jobs Card */}
-            <Card className="rounded-3xl border-none shadow-sm bg-white">
-                <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-                        <div className="p-1 rounded-full bg-emerald-100">
-                            <ArrowUpRight className="h-3 w-3 text-emerald-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold mb-1">{activeOrders}</div>
+                        <div className="text-xs text-muted-foreground">
+                            In Production
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-3xl font-bold mb-1">{completedOrders}</div>
-                    <div className="text-xs text-muted-foreground">
-                        Jobs Delivered
-                    </div>
-                </CardContent>
-            </Card>
 
-            {/* 4. Total Clients Card (Redesigned) */}
-            <Card className="rounded-3xl border-none shadow-sm bg-white">
-                <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Clients</CardTitle>
-                        <div className="p-1 rounded-full bg-blue-100">
-                            <Info className="h-3 w-3 text-blue-600" />
+                        <div className="h-[60px] w-full absolute bottom-0 left-0 right-0 opacity-20">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={sparkData2}>
+                                    <defs>
+                                        <linearGradient id="colorGradient2" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <Area type="monotone" dataKey="value" stroke="#f97316" fill="url(#colorGradient2)" strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-3xl font-bold mb-1">{totalClients}</div>
-                    <div className="text-xs text-muted-foreground">
-                        All profiles
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </Link>
+
+            {/* 3. Completed Jobs Card -> Links to Completed Tab */}
+            <Link href="/orders?tab=completed" className="block cursor-pointer transition-transform hover:scale-[1.02]">
+                <Card className="rounded-3xl border-none shadow-sm bg-white h-full">
+                    <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+                            <div className="p-1 rounded-full bg-emerald-100">
+                                <ArrowUpRight className="h-3 w-3 text-emerald-600" />
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold mb-1">{completedOrders}</div>
+                        <div className="text-xs text-muted-foreground">
+                            Jobs Delivered
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
+
+            {/* 4. Total Clients Card -> Links to All Orders Tab */}
+            <Link href="/orders?tab=all" className="block cursor-pointer transition-transform hover:scale-[1.02]">
+                <Card className="rounded-3xl border-none shadow-sm bg-white h-full">
+                    <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Total Clients</CardTitle>
+                            <div className="p-1 rounded-full bg-blue-100">
+                                <Info className="h-3 w-3 text-blue-600" />
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold mb-1">{totalClients}</div>
+                        <div className="text-xs text-muted-foreground">
+                            All profiles
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
         </>
     )
 }

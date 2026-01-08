@@ -28,13 +28,13 @@ export default async function ClientsPage() {
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
 
-    // 3. Fetch Active Orders Count (for Sidebar Badge)
+    // 3. Fetch Active Orders Count (Consistent logic: Not Delivered AND Not Ready)
     const { count: activeOrdersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
         .neq('status', 'delivered')
-        .neq('status', 'cancelled')
+        .neq('status', 'ready')
 
     return (
         <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount || 0}>

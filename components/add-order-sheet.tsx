@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Scissors, Loader2 } from "lucide-react"
-import { ImageUploader } from "@/components/image-uploader" // Import the Uploader
+import { ImageUploader } from "@/components/image-uploader"
 
 export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [imageUrls, setImageUrls] = useState<string[]>([]) // Store uploaded URLs
+  const [imageUrls, setImageUrls] = useState<string[]>([])
   const router = useRouter()
   const supabase = createClient()
 
@@ -24,7 +24,6 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
     const formData = new FormData(e.currentTarget)
     
-    // 1. Get current user & tenant
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
@@ -35,7 +34,6 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
         .single()
 
       if (profile?.tenant_id) {
-        // 2. Insert Order with Images
         const { error } = await supabase.from('orders').insert({
           tenant_id: profile.tenant_id,
           client_id: clientId,
@@ -44,14 +42,14 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           quantity: Number(formData.get("quantity")),
           total_amount: Number(formData.get("amount")),
           delivery_date: formData.get("delivery_date"),
-          style_image_urls: imageUrls, // <--- Save the R2 Links here
+          style_image_urls: imageUrls,
           status: 'cutting',
           payment_status: 'unpaid'
         })
 
         if (!error) {
           setOpen(false)
-          setImageUrls([]) // Reset images
+          setImageUrls([])
           router.refresh()
         } else {
             console.error(error)
@@ -69,7 +67,8 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           <Scissors className="h-4 w-4" /> New Order
         </Button>
       </SheetTrigger>
-      <SheetContent className="sm:max-w-[500px] sm:px-8 overflow-y-auto">
+      {/* FIX: Added 'w-full px-6' to ensure padding and full width on mobile */}
+      <SheetContent className="w-full sm:max-w-[500px] px-6 sm:px-8 overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Create New Order</SheetTitle>
           <SheetDescription>
@@ -83,7 +82,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
             <Textarea id="fabric" name="fabric" placeholder="e.g. Ankara fabric, long gown..." required />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="color">Color</Label>
                 <Input id="color" name="color" placeholder="Blue/Gold" />
@@ -94,7 +93,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="space-y-2">
                 <Label htmlFor="amount">Total Amount (₦)</Label>
                 <Input id="amount" name="amount" type="number" placeholder="0.00" required />
@@ -105,7 +104,6 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
              </div>
           </div>
 
-          {/* Image Uploader Section */}
           <div className="space-y-2">
              <Label>Style References</Label>
              <div className="border rounded-md p-4 bg-slate-50">

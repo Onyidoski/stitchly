@@ -74,7 +74,7 @@ export function EditOrderSheet({ order }: EditOrderProps) {
                 </Button>
             </SheetTrigger>
 
-            <SheetContent className="sm:max-w-[400px] sm:px-8">
+            <SheetContent className="sm:max-w-[400px] sm:px-8 px-6">
                 <SheetHeader>
                     <SheetTitle>Manage Order</SheetTitle>
                     <SheetDescription>

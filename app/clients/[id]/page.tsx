@@ -3,7 +3,7 @@ import NavShell from '@/components/nav-shell'
 import { AddMeasurementSheet } from '@/components/add-measurement-sheet'
 import { AddOrderSheet } from '@/components/add-order-sheet'
 import { EditOrderSheet } from '@/components/edit-order-sheet'
-import { EditMeasurementSheet } from '@/components/edit-measurement-sheet' // <--- Imported
+import { EditMeasurementSheet } from '@/components/edit-measurement-sheet'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -31,18 +31,29 @@ export default async function ClientDetailsPage({ params }: PageProps) {
 
     // @ts-ignore
     const businessName = profile?.tenants?.business_name || 'Stitchly'
+    const tenantId = profile?.tenant_id
 
+    // 1. Fetch Client
     const { data: client } = await supabase
         .from('clients')
         .select('*')
         .eq('id', id)
-        .eq('tenant_id', profile?.tenant_id)
+        .eq('tenant_id', tenantId)
         .single()
 
     if (!client) {
         return <NavShell businessName={businessName} userEmail={user.email || ''}><div>Client not found</div></NavShell>
     }
 
+    // 2. Fetch Active Orders Count (ADDED THIS)
+    const { count: activeOrdersCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .neq('status', 'delivered')
+        .neq('status', 'ready')
+
+    // 3. Fetch Measurements & Orders for Client
     const { data: measurements } = await supabase
         .from('measurements')
         .select('*')
@@ -67,7 +78,7 @@ export default async function ClientDetailsPage({ params }: PageProps) {
     }
 
     return (
-        <NavShell businessName={businessName} userEmail={user.email || ''}>
+        <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount || 0}>
 
             {/* HEADER */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -189,7 +200,6 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                         {measurements && measurements.length > 0 ? (
                             measurements.map((m) => (
                                 <Card key={m.id}>
-                                    {/* UPDATE: Card Header with Edit Button */}
                                     <CardHeader className="pb-2 border-b bg-muted/20">
                                         <div className="flex justify-between items-center">
                                             <CardTitle className="text-sm font-medium text-muted-foreground flex flex-col">
@@ -229,7 +239,7 @@ export default async function ClientDetailsPage({ params }: PageProps) {
 
                                         <div className="border-t"></div>
 
-                                        {/* Sleeves Section (Side by Side) */}
+                                        {/* Sleeves Section */}
                                         <div>
                                             <h4 className="font-semibold text-xs text-primary mb-3 uppercase tracking-wider">Sleeves</h4>
                                             <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-md">
@@ -296,7 +306,6 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                     </div>
                 </TabsContent>
             </Tabs>
-
         </NavShell>
     )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link"
-import Image from "next/image" // Import Image for the logo
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, Users, Scissors, FileText, LayoutDashboard, LogOut, Package2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -55,7 +55,7 @@ export default function NavShell({
                         <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
                             <Scissors className="h-5 w-5 text-primary" />
                         </div>
-                        <span>Ryvix</span>
+                        <span>Stitchly</span>
                     </Link>
                 </div>
 
@@ -84,8 +84,6 @@ export default function NavShell({
                         })}
                     </nav>
                 </div>
-
-
             </aside>
 
             {/* MAIN CONTENT WRAPPER */}
@@ -103,7 +101,7 @@ export default function NavShell({
                             {/* Mobile Sidebar Content */}
                             <div className="h-full flex flex-col">
                                 <div className="h-16 flex items-center px-6 border-b">
-                                    <span className="font-bold text-xl text-primary">Ryvix</span>
+                                    <SheetTitle className="font-bold text-xl text-primary">Stitchly</SheetTitle>
                                 </div>
                                 <div className="flex-1 py-6 px-4">
                                     <nav className="grid gap-2 text-sm font-medium">
@@ -119,6 +117,12 @@ export default function NavShell({
                                             >
                                                 <item.icon className="h-4 w-4" />
                                                 {item.name}
+                                                {/* FIX: Added badge logic here for mobile view */}
+                                                {item.name === 'Orders' && activeOrdersCount > 0 && (
+                                                    <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                                        {activeOrdersCount}
+                                                    </span>
+                                                )}
                                             </Link>
                                         ))}
                                     </nav>

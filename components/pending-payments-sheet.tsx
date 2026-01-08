@@ -40,7 +40,7 @@ export function PendingPaymentsSheet({ orders }: PendingPaymentsSheetProps) {
                 </Card>
             </SheetTrigger>
 
-            <SheetContent className="sm:max-w-[700px] sm:px-8 overflow-y-auto">
+            <SheetContent className="sm:max-w-[700px] sm:px-8 overflow-y-auto px-6">
                 <SheetHeader>
                     <SheetTitle>Pending Payments Details</SheetTitle>
                     <SheetDescription>

@@ -4,11 +4,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { OrdersTable } from '@/components/orders-table'
 
-export default async function OrdersPage() {
+// FIX: Added interface to accept searchParams (URL query strings)
+interface OrdersPageProps {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return <div>Please log in</div>
+
+    // Await the params to get the 'tab' value
+    const params = await searchParams
+    const currentTab = (typeof params.tab === 'string' ? params.tab : 'active')
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -47,8 +56,10 @@ export default async function OrdersPage() {
                     </div>
                 </div>
 
-                <Tabs defaultValue="active" className="space-y-4">
-                    <TabsList className="bg-slate-100 p-1 rounded-xl w-full flex-wrap h-auto justify-start">
+                {/* FIX: Set defaultValue to the tab from URL */}
+                <Tabs defaultValue={currentTab} className="space-y-4">
+                    {/* FIX: Added w-fit to prevent background stretching */}
+                    <TabsList className="bg-slate-100 p-1 rounded-xl w-fit flex-wrap h-auto justify-start">
                         <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">Active ({activeOrders.length})</TabsTrigger>
                         <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">Completed ({completedOrders.length})</TabsTrigger>
                         <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">All ({allOrders.length})</TabsTrigger>
