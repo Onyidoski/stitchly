@@ -19,6 +19,13 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         e.preventDefault()
         setLoading(true)
 
+        // FIX: Add safety check for missing tenant
+        if (!tenant || !tenant.id) {
+            alert("Error: No business profile found. Please try refreshing the page.")
+            setLoading(false)
+            return
+        }
+
         const formData = new FormData(e.currentTarget)
         const businessName = formData.get("businessName") as string
         const phone = formData.get("phone") as string

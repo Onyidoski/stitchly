@@ -117,7 +117,6 @@ export default function NavShell({
                                             >
                                                 <item.icon className="h-4 w-4" />
                                                 {item.name}
-                                                {/* FIX: Added badge logic here for mobile view */}
                                                 {item.name === 'Orders' && activeOrdersCount > 0 && (
                                                     <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                                                         {activeOrdersCount}
@@ -157,7 +156,10 @@ export default function NavShell({
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>{businessName}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>Settings</DropdownMenuItem>
+                                {/* FIX: Wrapped 'Settings' in a Link component */}
+                                <DropdownMenuItem asChild>
+                                    <Link href="/settings" className="cursor-pointer w-full">Settings</Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
                                     <LogOut className="mr-2 h-4 w-4" /> Log Out
                                 </DropdownMenuItem>
