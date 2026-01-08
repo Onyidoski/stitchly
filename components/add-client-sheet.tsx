@@ -42,13 +42,15 @@ export function AddClientSheet() {
           tenant_id: profile.tenant_id,
           name,
           phone,
-          notes: email ? `Email: ${email}` : '', 
+          email: email, // <--- SAVED CORRECTLY HERE
           gender
         })
 
         if (!error) {
           setOpen(false)
           router.refresh() // Refreshes the background page instantly
+        } else {
+            console.error("Error adding client:", error)
         }
       }
     }
@@ -63,7 +65,6 @@ export function AddClientSheet() {
         </Button>
       </SheetTrigger>
       
-      {/* UPDATE: Added className="sm:max-w-[500px] sm:px-8" for better spacing */}
       <SheetContent className="sm:max-w-[500px] sm:px-8">
         <SheetHeader>
           <SheetTitle>Add New Client</SheetTitle>

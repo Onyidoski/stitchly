@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import NavShell from '@/components/nav-shell'
 import { AddMeasurementSheet } from '@/components/add-measurement-sheet'
 import { AddOrderSheet } from '@/components/add-order-sheet'
-import { EditOrderSheet } from '@/components/edit-order-sheet' // Import Added
+import { EditOrderSheet } from '@/components/edit-order-sheet'
+import { EditMeasurementSheet } from '@/components/edit-measurement-sheet' // <--- Imported
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -53,6 +54,17 @@ export default async function ClientDetailsPage({ params }: PageProps) {
     .select('*')
     .eq('client_id', id)
     .order('created_at', { ascending: false })
+
+  // Helper to render simple measurement blocks
+  const MBlock = ({ label, value }: { label: string, value: any }) => {
+    if (!value) return null
+    return (
+        <div className="flex flex-col">
+            <span className="text-[10px] text-muted-foreground uppercase">{label}</span>
+            <span className="font-semibold text-sm">{value}</span>
+        </div>
+    )
+  }
 
   return (
     <NavShell businessName={businessName} userEmail={user.email || ''}>
@@ -106,14 +118,12 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                                     <Badge variant={order.status === 'ready' ? 'default' : 'outline'} className="capitalize">
                                         {order.status}
                                     </Badge>
-                                    {/* Edit Button */}
                                     <EditOrderSheet order={order} />
                                 </div>
                             </div>
                         </CardHeader>
                         
                         <CardContent className="pt-6 flex-1 flex flex-col gap-6">
-                            {/* Large Image Gallery */}
                             {order.style_image_urls && order.style_image_urls.length > 0 && (
                                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
                                     {order.style_image_urls.map((url: string, i: number) => (
@@ -162,7 +172,7 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                 ))
             ) : (
                 <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                    No orders yet. Create one to get started!
+                    No orders yet.
                 </div>
             )}
           </div>
@@ -175,25 +185,104 @@ export default async function ClientDetailsPage({ params }: PageProps) {
              <AddMeasurementSheet clientId={client.id} />
           </div>
           
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-1">
             {measurements && measurements.length > 0 ? (
                 measurements.map((m) => (
                     <Card key={m.id}>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                {new Date(m.created_at).toLocaleDateString()}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 gap-y-2 text-sm">
-                                <div>Chest: <span className="font-bold">{m.chest || '-'}</span></div>
-                                <div>Waist: <span className="font-bold">{m.waist || '-'}</span></div>
-                                <div>Hip: <span className="font-bold">{m.hip || '-'}</span></div>
-                                <div>Length: <span className="font-bold">{m.length || '-'}</span></div>
+                        {/* UPDATE: Card Header with Edit Button */}
+                        <CardHeader className="pb-2 border-b bg-muted/20">
+                             <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm font-medium text-muted-foreground flex flex-col">
+                                    <span>{new Date(m.created_at).toLocaleDateString()}</span>
+                                    <span className="text-xs font-normal">Measurement ID: {m.id.slice(0,4)}</span>
+                                </CardTitle>
+                                
+                                <EditMeasurementSheet measurement={m} />
                             </div>
+                        </CardHeader>
+
+                        <CardContent className="pt-4 space-y-6">
+                            
+                            {/* Body Section */}
+                            <div>
+                                <h4 className="font-semibold text-xs text-primary mb-3 uppercase tracking-wider">Body / Top</h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2">
+                                    <MBlock label="Round Shoulder" value={m.round_shoulder} />
+                                    <MBlock label="Round Armhole" value={m.round_armhole} />
+                                    <MBlock label="Upper Bust" value={m.round_upper_bust} />
+                                    <MBlock label="Shoulder" value={m.shoulder} />
+                                    <MBlock label="Bust Span" value={m.bust_span} />
+                                    <MBlock label="Bust" value={m.bust} />
+                                    <MBlock label="Bust Point" value={m.bust_point} />
+                                    <MBlock label="Underbust" value={m.underbust} />
+                                    <MBlock label="Underbust Pt" value={m.underbust_point} />
+                                    <MBlock label="Waist" value={m.waist} />
+                                    <MBlock label="Waist Pt" value={m.waist_point} />
+                                    <MBlock label="Hips" value={m.hip} />
+                                    <MBlock label="Hip Pt" value={m.hip_point} />
+                                    <MBlock label="Back Length" value={m.back_length} />
+                                    <MBlock label="Knee Length" value={m.knee_length} />
+                                    <MBlock label="Blouse Length" value={m.blouse_length} />
+                                    <MBlock label="Full Length" value={m.full_length} />
+                                </div>
+                            </div>
+
+                            <div className="border-t"></div>
+
+                            {/* Sleeves Section (Side by Side) */}
+                            <div>
+                                <h4 className="font-semibold text-xs text-primary mb-3 uppercase tracking-wider">Sleeves</h4>
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-md">
+                                    <div className="text-[10px] text-muted-foreground font-bold uppercase">Length</div>
+                                    <div className="text-[10px] text-muted-foreground font-bold uppercase">Round</div>
+
+                                    {(m.sleeve_length_short || m.round_sleeve_short) && (
+                                        <>
+                                            <div className="text-sm font-medium">{m.sleeve_length_short || '-'} <span className="text-xs font-normal text-muted-foreground">(Short)</span></div>
+                                            <div className="text-sm font-medium">{m.round_sleeve_short || '-'}</div>
+                                        </>
+                                    )}
+                                    {(m.sleeve_length_elbow || m.round_sleeve_elbow) && (
+                                        <>
+                                            <div className="text-sm font-medium">{m.sleeve_length_elbow || '-'} <span className="text-xs font-normal text-muted-foreground">(Elbow)</span></div>
+                                            <div className="text-sm font-medium">{m.round_sleeve_elbow || '-'}</div>
+                                        </>
+                                    )}
+                                    {(m.sleeve_length_3_4 || m.round_sleeve_3_4) && (
+                                        <>
+                                            <div className="text-sm font-medium">{m.sleeve_length_3_4 || '-'} <span className="text-xs font-normal text-muted-foreground">(3/4)</span></div>
+                                            <div className="text-sm font-medium">{m.round_sleeve_3_4 || '-'}</div>
+                                        </>
+                                    )}
+                                    {(m.sleeve_length_full || m.round_sleeve_full) && (
+                                        <>
+                                            <div className="text-sm font-medium">{m.sleeve_length_full || '-'} <span className="text-xs font-normal text-muted-foreground">(Full)</span></div>
+                                            <div className="text-sm font-medium">{m.round_sleeve_full || '-'}</div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                             <div className="border-t"></div>
+
+                             {/* Trouser Section */}
+                            <div>
+                                <h4 className="font-semibold text-xs text-primary mb-3 uppercase tracking-wider">Trouser / Bottom</h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2">
+                                    <MBlock label="Tr. Waist" value={m.trouser_waist} />
+                                    <MBlock label="Tr. Hips" value={m.trouser_hips} />
+                                    <MBlock label="Hip Pt" value={m.trouser_hip_point} />
+                                    <MBlock label="Thigh" value={m.thigh} />
+                                    <MBlock label="Round Knee" value={m.round_knee} />
+                                    <MBlock label="Ankle" value={m.ankle} />
+                                    <MBlock label="Tr. Length" value={m.trouser_length} />
+                                    <MBlock label="Pallazo" value={m.pallazo_length} />
+                                </div>
+                            </div>
+
                             {m.notes && (
-                                <div className="mt-3 text-xs text-muted-foreground bg-muted p-2 rounded">
-                                    Notes: {m.notes}
+                                <div className="mt-3 text-xs text-muted-foreground bg-muted p-3 rounded">
+                                    <span className="font-bold">Note:</span> {m.notes}
                                 </div>
                             )}
                         </CardContent>

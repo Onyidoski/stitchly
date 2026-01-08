@@ -27,23 +27,23 @@ export function EditOrderSheet({ order }: EditOrderProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  // Local state for immediate UI feedback
+  // Local state for controlled inputs (Safe way to ensure values exist)
+  const [status, setStatus] = useState(order.status)
   const [paymentStatus, setPaymentStatus] = useState(order.payment_status)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
+    // We can still use FormData for simple inputs like paid_amount
     const formData = new FormData(e.currentTarget)
-    const newStatus = formData.get("status")
-    const newPaymentStatus = formData.get("payment_status")
     const newPaidAmount = Number(formData.get("paid_amount"))
 
     const { error } = await supabase
       .from('orders')
       .update({
-        status: newStatus,
-        payment_status: newPaymentStatus,
+        status: status, // Use state directly
+        payment_status: paymentStatus, // Use state directly
         paid_amount: newPaidAmount
       })
       .eq('id', order.id)
@@ -53,8 +53,16 @@ export function EditOrderSheet({ order }: EditOrderProps) {
       router.refresh()
     } else {
       console.error("Error updating order", error)
+      alert("Error updating order")
     }
     setLoading(false)
+  }
+
+  // Helper to determine the default value for the amount input
+  const getAmountDefaultValue = () => {
+    if (paymentStatus === 'paid') return order.total_amount
+    if (paymentStatus === 'unpaid') return 0
+    return order.paid_amount || 0
   }
 
   return (
@@ -66,7 +74,6 @@ export function EditOrderSheet({ order }: EditOrderProps) {
         </Button>
       </SheetTrigger>
       
-      {/* ADDED: sm:px-8 for better side padding */}
       <SheetContent className="sm:max-w-[400px] sm:px-8">
         <SheetHeader>
           <SheetTitle>Manage Order</SheetTitle>
@@ -79,7 +86,11 @@ export function EditOrderSheet({ order }: EditOrderProps) {
           {/* WORKFLOW STATUS */}
           <div className="space-y-2">
             <Label htmlFor="status">Production Status</Label>
-            <Select name="status" defaultValue={order.status}>
+            <Select 
+                name="status" 
+                value={status} 
+                onValueChange={setStatus}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -100,7 +111,7 @@ export function EditOrderSheet({ order }: EditOrderProps) {
             <Label htmlFor="payment_status">Payment Status</Label>
             <Select 
                 name="payment_status" 
-                defaultValue={order.payment_status}
+                value={paymentStatus}
                 onValueChange={setPaymentStatus}
             >
               <SelectTrigger>
@@ -125,8 +136,9 @@ export function EditOrderSheet({ order }: EditOrderProps) {
                     id="paid_amount" 
                     name="paid_amount" 
                     type="number" 
-                    defaultValue={order.paid_amount || 0}
-                    // If they select "Paid", auto-fill the total (optional UX helper)
+                    // This logic handles the auto-update
+                    defaultValue={getAmountDefaultValue()}
+                    // Key forces the input to re-render when status changes
                     key={paymentStatus} 
                 />
              </div>

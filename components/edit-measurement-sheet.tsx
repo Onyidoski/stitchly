@@ -7,111 +7,117 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Ruler, Loader2 } from "lucide-react"
+import { Edit2, Loader2, Trash2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-export function AddMeasurementSheet({ clientId }: { clientId: string }) {
+export function EditMeasurementSheet({ measurement }: { measurement: any }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // 1. UPDATE Logic
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
     
-    const { data: { user } } = await supabase.auth.getUser()
+    // Convert FormData to a plain object for Supabase
+    const updates: any = {
+      notes: formData.get("notes"),
+    }
     
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single()
+    // Loop through all measurement fields to capture them dynamically
+    const fields = [
+      "round_shoulder", "round_armhole", "round_upper_bust", "shoulder", "bust_span", 
+      "bust", "bust_point", "underbust", "underbust_point", "waist", "waist_point", 
+      "hip", "hip_point", "back_length", "knee_length", "full_length", "blouse_length",
+      "sleeve_length_short", "round_sleeve_short", "sleeve_length_elbow", "round_sleeve_elbow",
+      "sleeve_length_3_4", "round_sleeve_3_4", "sleeve_length_full", "round_sleeve_full",
+      "trouser_waist", "trouser_hips", "trouser_hip_point", "thigh", "round_knee", 
+      "ankle", "trouser_length", "pallazo_length"
+    ]
 
-      if (profile?.tenant_id) {
-        const { error } = await supabase.from('measurements').insert({
-          tenant_id: profile.tenant_id,
-          client_id: clientId,
-          // Body
-          round_shoulder: formData.get("round_shoulder"),
-          round_armhole: formData.get("round_armhole"),
-          round_upper_bust: formData.get("round_upper_bust"),
-          shoulder: formData.get("shoulder"),
-          bust_span: formData.get("bust_span"),
-          bust: formData.get("bust"),
-          bust_point: formData.get("bust_point"),
-          underbust: formData.get("underbust"),
-          underbust_point: formData.get("underbust_point"),
-          waist: formData.get("waist"),
-          waist_point: formData.get("waist_point"),
-          hip: formData.get("hip"),
-          back_length: formData.get("back_length"),
-          hip_point: formData.get("hip_point"),
-          knee_length: formData.get("knee_length"),
-          full_length: formData.get("full_length"),
-          blouse_length: formData.get("blouse_length"),
-          
-          // Sleeves
-          sleeve_length_short: formData.get("sleeve_length_short"),
-          round_sleeve_short: formData.get("round_sleeve_short"),
-          sleeve_length_elbow: formData.get("sleeve_length_elbow"),
-          round_sleeve_elbow: formData.get("round_sleeve_elbow"),
-          sleeve_length_3_4: formData.get("sleeve_length_3_4"),
-          round_sleeve_3_4: formData.get("round_sleeve_3_4"),
-          sleeve_length_full: formData.get("sleeve_length_full"),
-          round_sleeve_full: formData.get("round_sleeve_full"),
+    fields.forEach(field => {
+        const val = formData.get(field)
+        if (val) updates[field] = val
+    })
 
-          // Trouser
-          trouser_waist: formData.get("trouser_waist"),
-          trouser_hips: formData.get("trouser_hips"),
-          trouser_hip_point: formData.get("trouser_hip_point"),
-          thigh: formData.get("thigh"),
-          round_knee: formData.get("round_knee"),
-          ankle: formData.get("ankle"),
-          trouser_length: formData.get("trouser_length"),
-          pallazo_length: formData.get("pallazo_length"),
-          
-          notes: formData.get("notes"),
-        })
+    const { error } = await supabase
+      .from('measurements')
+      .update(updates)
+      .eq('id', measurement.id)
 
-        if (!error) {
-          setOpen(false)
-          router.refresh()
-        } else {
-            console.error(error)
-        }
-      }
+    if (!error) {
+      setOpen(false)
+      router.refresh()
+    } else {
+      console.error(error)
+      alert("Failed to update measurements")
     }
     setLoading(false)
   }
 
-  // Helper component for form fields
+  // 2. DELETE Logic
+  const handleDelete = async () => {
+    setDeleteLoading(true)
+    const { error } = await supabase
+        .from('measurements')
+        .delete()
+        .eq('id', measurement.id)
+
+    if (!error) {
+        setOpen(false)
+        router.refresh()
+    } else {
+        alert("Failed to delete")
+    }
+    setDeleteLoading(false)
+  }
+
+  // Helper for fields
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
-      <Input id={id} name={id} type="number" step="0.1" className="h-8" />
+      <Input 
+        id={id} 
+        name={id} 
+        type="number" 
+        step="0.1" 
+        className="h-8" 
+        defaultValue={measurement[id] || ''} 
+      />
     </div>
   )
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Ruler className="h-4 w-4" /> Add Measurements
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Edit2 className="h-4 w-4 text-muted-foreground" />
         </Button>
       </SheetTrigger>
+      
       <SheetContent className="sm:max-w-[600px] sm:px-0">
         <SheetHeader className="px-6">
-          <SheetTitle>New Measurements</SheetTitle>
-          <SheetDescription>
-            Enter comprehensive measurement details.
-          </SheetDescription>
+          <SheetTitle>Edit Measurements</SheetTitle>
+          <SheetDescription>Update or delete this record.</SheetDescription>
         </SheetHeader>
         
-        <form onSubmit={handleSubmit} className="flex flex-col h-full pb-20">
+        <form onSubmit={handleUpdate} className="flex flex-col h-full pb-20">
           <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)]">
             <div className="space-y-8">
                 
@@ -139,29 +145,25 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
                     </div>
                 </div>
 
-                {/* 2. SLEEVE MEASUREMENTS (Side by Side) */}
+                {/* 2. SLEEVES */}
                 <div>
                     <h4 className="font-medium text-primary mb-4 border-b pb-1">Sleeves</h4>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        {/* Header Row */}
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
 
                         <Field id="sleeve_length_short" label="Short Sleeve Length" />
                         <Field id="round_sleeve_short" label="Round Short Sleeve" />
-
                         <Field id="sleeve_length_elbow" label="Elbow Sleeve Length" />
                         <Field id="round_sleeve_elbow" label="Round Elbow Sleeve" />
-
                         <Field id="sleeve_length_3_4" label="3/4 Sleeve Length" />
                         <Field id="round_sleeve_3_4" label="Round 3/4 Sleeve" />
-
                         <Field id="sleeve_length_full" label="Full Sleeve Length" />
                         <Field id="round_sleeve_full" label="Round Full Sleeve" />
                     </div>
                 </div>
 
-                {/* 3. TROUSER MEASUREMENTS */}
+                {/* 3. TROUSERS */}
                 <div>
                     <h4 className="font-medium text-primary mb-4 border-b pb-1">Trouser / Bottom</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -178,16 +180,41 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
 
                 <div className="space-y-2">
                     <Label htmlFor="notes">Additional Notes</Label>
-                    <Input id="notes" name="notes" placeholder="Any specific requirements..." />
+                    <Input id="notes" name="notes" defaultValue={measurement.notes || ''} />
                 </div>
             </div>
           </ScrollArea>
 
-          {/* ADDED pb-10 here for spacing */}
-          <SheetFooter className="px-6 pt-4 pb-10 border-t">
-            <Button type="submit" disabled={loading} className="w-full">
+          {/* ADDED pb-10 here */}
+          <SheetFooter className="px-6 pt-4 pb-10 border-t flex flex-row justify-between gap-4">
+            
+            {/* DELETE BUTTON (Left) */}
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button type="button" variant="destructive" size="icon" disabled={loading || deleteLoading}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this measurement?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This record will be permanently removed.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                            {deleteLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* SAVE BUTTON (Right) */}
+            <Button type="submit" disabled={loading || deleteLoading} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Measurements
+              Save Changes
             </Button>
           </SheetFooter>
         </form>
