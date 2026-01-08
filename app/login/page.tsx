@@ -32,6 +32,8 @@ export default function LoginPage() {
                     email,
                     password,
                     options: {
+                        // This directs the user to your new route after clicking the email link
+                        emailRedirectTo: `${location.origin}/auth/callback`,
                         data: {
                             full_name: fullName,
                             business_name: businessName,
@@ -59,16 +61,20 @@ export default function LoginPage() {
     return (
         <div className="flex min-h-screen w-full">
             {/* Left Side - Form */}
-            <div className="flex w-full flex-col justify-center bg-white px-8 py-12 md:w-1/2 lg:px-20 xl:px-24">
+            <div className="flex w-full flex-col justify-center bg-white px-8 py-8 md:w-1/2 lg:px-20 xl:px-24">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
-                    <div className="mb-10">
-                        <h1 className="flex items-center gap-2 text-2xl font-bold text-indigo-600">
-                            {/* Logo Icon Placeholder if needed */}
-                            Stitchly
-                        </h1>
+                    <div className="mb-6 flex justify-center">
+                        <div className="relative h-24 w-24 overflow-hidden rounded-md">
+                            <Image
+                                src="/logo.png"
+                                alt="Logo"
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
                     </div>
 
-                    <div className="mb-8">
+                    <div className="mb-6">
                         <h2 className="text-3xl font-bold tracking-tight text-gray-900">
                             Welcome to Stitchly
                         </h2>
