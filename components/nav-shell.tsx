@@ -139,10 +139,6 @@ export default function NavShell({
 
                     {/* RIGHT SIDE HEADER ACTIONS */}
                     <div className="ml-auto flex items-center gap-4">
-                        <Button variant="ghost" size="sm" className="hidden md:flex gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:bg-slate-200 h-auto">
-                            <span>Select Date</span>
-                        </Button>
-
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="secondary" size="icon" className="rounded-full h-9 w-9">

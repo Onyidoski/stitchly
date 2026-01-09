@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,7 +22,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
 
         // FIX: Add safety check for missing tenant
         if (!tenant || !tenant.id) {
-            alert("Error: No business profile found. Please try refreshing the page.")
+            toast.error("Error: No business profile found. Please try refreshing the page.")
             setLoading(false)
             return
         }
@@ -42,11 +43,11 @@ export function SettingsForm({ tenant }: { tenant: any }) {
             .eq('id', tenant.id)
 
         if (error) {
-            alert('Error updating settings')
+            toast.error('Error updating settings')
             console.error(error)
         } else {
-            alert('Settings saved successfully!')
-            window.location.reload() 
+            toast.success('Settings saved successfully!')
+            window.location.reload()
         }
 
         setLoading(false)
@@ -54,14 +55,14 @@ export function SettingsForm({ tenant }: { tenant: any }) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             <div className="space-y-2">
                 <Label>Business Logo</Label>
                 <div className="flex items-center gap-6 border p-4 rounded-lg bg-slate-50">
                     {logoUrl ? (
                         <div className="relative h-20 w-20 border rounded-md bg-white overflow-hidden">
                             <Image src={logoUrl} alt="Logo" fill className="object-contain p-1" />
-                            <button 
+                            <button
                                 type="button"
                                 onClick={() => setLogoUrl('')}
                                 className="absolute inset-0 bg-black/50 text-white text-xs flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
@@ -74,10 +75,10 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                             <Upload className="h-6 w-6" />
                         </div>
                     )}
-                    
+
                     <div className="flex-1">
-                        <ImageUploader 
-                            onUploadComplete={(urls) => setLogoUrl(urls[0])} 
+                        <ImageUploader
+                            onUploadComplete={(urls) => setLogoUrl(urls[0])}
                         />
                         <p className="text-xs text-muted-foreground mt-2">
                             Recommended: Square PNG image, transparent background.
@@ -89,30 +90,30 @@ export function SettingsForm({ tenant }: { tenant: any }) {
             <div className="grid gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="businessName">Business Name</Label>
-                    <Input 
-                        id="businessName" 
-                        name="businessName" 
-                        defaultValue={tenant?.business_name} 
-                        required 
+                    <Input
+                        id="businessName"
+                        name="businessName"
+                        defaultValue={tenant?.business_name}
+                        required
                     />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input 
-                        id="phone" 
-                        name="phone" 
-                        defaultValue={tenant?.phone} 
+                    <Input
+                        id="phone"
+                        name="phone"
+                        defaultValue={tenant?.phone}
                         placeholder="+234 800 000 0000"
                     />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="address">Business Address</Label>
-                    <Textarea 
-                        id="address" 
-                        name="address" 
-                        defaultValue={tenant?.address} 
+                    <Textarea
+                        id="address"
+                        name="address"
+                        defaultValue={tenant?.address}
                         placeholder="123 Fashion Street, Lagos..."
                         rows={3}
                     />
