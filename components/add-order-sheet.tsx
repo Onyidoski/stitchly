@@ -8,23 +8,65 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Scissors, Loader2 } from "lucide-react"
+import { Scissors, Loader2, Sparkles, ArrowRight } from "lucide-react" // [!code ++] Added icons
 import { ImageUploader } from "@/components/image-uploader"
-import { toast } from "sonner" // [1] IMPORT TOAST
+import { toast } from "sonner"
 
 export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [imageUrls, setImageUrls] = useState<string[]>([])
+  
+  // [!code ++] New AI States
+  const [aiLoading, setAiLoading] = useState(false)
+  const [estimate, setEstimate] = useState<{
+    fabric_yards: string;
+    price_min: number;
+    price_max: number;
+    reasoning: string;
+  } | null>(null)
+  const [description, setDescription] = useState("") 
+
   const router = useRouter()
   const supabase = createClient()
+
+  // [!code ++] New AI Handler
+  const handleAiEstimate = async () => {
+    if (!description || description.length < 5) {
+      toast.error("Please enter a style description first")
+      return
+    }
+
+    setAiLoading(true)
+    setEstimate(null) // Reset previous estimate
+
+    try {
+      const res = await fetch('/api/ai/estimate', {
+        method: 'POST',
+        body: JSON.stringify({ description })
+      })
+      
+      const data = await res.json()
+      
+      if (data.result) {
+        setEstimate(data.result)
+        toast.success("Estimate generated!")
+      } else {
+        toast.error("Could not generate estimate")
+      }
+    } catch (e) {
+      toast.error("AI service error")
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-
+    // ... existing logic ...
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
@@ -49,13 +91,15 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
         })
 
         if (!error) {
-          toast.success("New order created!") // [2] SUCCESS TOAST
+          toast.success("New order created!")
           setOpen(false)
           setImageUrls([])
+          setEstimate(null) // Clear estimate
+          setDescription("")
           router.refresh()
         } else {
           console.error(error)
-          toast.error("Failed to create order.") // [3] ERROR TOAST (replaced alert)
+          toast.error("Failed to create order.")
         }
       }
     }
@@ -64,13 +108,11 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {/* ... rest of the JSX remains exactly the same ... */}
       <SheetTrigger asChild>
         <Button size="sm" className="gap-2">
           <Scissors className="h-4 w-4" /> New Order
         </Button>
       </SheetTrigger>
-      {/* FIX: Added 'w-full px-6' to ensure padding and full width on mobile */}
       <SheetContent className="w-full sm:max-w-[500px] px-6 sm:px-8 overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Create New Order</SheetTitle>
@@ -81,10 +123,59 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
         <form onSubmit={handleSubmit} className="grid gap-6 py-6">
 
           <div className="space-y-2">
-            <Label htmlFor="fabric">Fabric / Style Description</Label>
-            <Textarea id="fabric" name="fabric" placeholder="e.g. Ankara fabric, long gown..." required />
+            <div className="flex justify-between items-center">
+                <Label htmlFor="fabric">Fabric / Style Description</Label>
+                {/* [!code ++] AI Button */}
+                <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleAiEstimate}
+                    disabled={aiLoading}
+                    className="h-6 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                >
+                    {aiLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                    {aiLoading ? 'Analyzing...' : 'AI Estimate'}
+                </Button>
+            </div>
+            <Textarea 
+                id="fabric" 
+                name="fabric" 
+                placeholder="e.g. Off-shoulder Ankara gown with lace trimming..." 
+                required 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+            />
+
+            {/* [!code ++] Estimate Result Card */}
+            {estimate && (
+                <div className="rounded-md bg-indigo-50 p-3 border border-indigo-100 text-sm animate-in slide-in-from-top-2">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="font-semibold text-indigo-900">AI Suggestion:</span>
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 px-2 text-[10px] text-indigo-700 bg-white border border-indigo-200 hover:bg-white"
+                            onClick={() => {
+                                const input = document.getElementById('amount') as HTMLInputElement
+                                if(input) input.value = estimate.price_max.toString()
+                                toast.success(`Applied price: ₦${estimate.price_max}`)
+                            }}
+                        >
+                            Apply Price <ArrowRight className="w-3 h-3 ml-1" />
+                        </Button>
+                    </div>
+                    <div className="space-y-1 text-indigo-800">
+                        <p>📏 <span className="font-medium">Fabric:</span> {estimate.fabric_yards}</p>
+                        <p>💰 <span className="font-medium">Price:</span> ₦{estimate.price_min.toLocaleString()} - ₦{estimate.price_max.toLocaleString()}</p>
+                        <p className="text-xs text-indigo-600 mt-1 italic">"{estimate.reasoning}"</p>
+                    </div>
+                </div>
+            )}
           </div>
 
+          {/* Rest of the form inputs... */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="color">Color</Label>
