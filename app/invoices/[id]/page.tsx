@@ -18,6 +18,7 @@ export default async function InvoiceDetailsPage({
 
     if (!order) return <div>Invoice not found</div>
 
+    // Fetch tenant details including the new bank fields
     const { data: tenant } = await supabase
         .from('tenants')
         .select('*')
@@ -52,7 +53,7 @@ export default async function InvoiceDetailsPage({
                                     alt="Logo" 
                                     fill 
                                     className="object-contain p-1"
-                                    // [FIX] Removed 'unoptimized' to fix CORS error for PDF generation
+                                    // Ensure 'unoptimized' is REMOVED here to allow PDF generation
                                 />
                             ) : (
                                 businessName.charAt(0)
@@ -162,10 +163,11 @@ export default async function InvoiceDetailsPage({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Payment Details</h4>
+                            {/* DYNAMIC PAYMENT DETAILS */}
                             <p className="text-sm text-slate-600">
-                                Bank Name: <span className="font-medium text-slate-900">Access Bank</span><br />
-                                Account Name: <span className="font-medium text-slate-900">{businessName}</span><br />
-                                Account No: <span className="font-medium text-slate-900">0000 0000 00</span>
+                                Bank Name: <span className="font-medium text-slate-900">{tenant?.bank_name || 'Not set'}</span><br />
+                                Account Name: <span className="font-medium text-slate-900">{tenant?.account_name || tenant?.business_name}</span><br />
+                                Account No: <span className="font-medium text-slate-900">{tenant?.account_number || 'Not set'}</span>
                             </p>
                         </div>
                         <div className="md:text-right">
