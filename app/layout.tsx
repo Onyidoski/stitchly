@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { IosInstallPrompt } from "@/components/ios-install-prompt";
-import { ThemeProvider } from "@/components/theme-provider"; // [!code ++]
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,6 +25,12 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Stitchly",
+    // This sets the splash screen for iOS. 
+    // For a perfect fit on all devices, you would generate specific images 
+    // and list them here, but this single image acts as a decent fallback.
+    startupImage: [
+      "/icon-512x512.png",
+    ],
   },
   icons: {
     icon: "/favicon.ico",
@@ -45,12 +51,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // [!code ++] Add suppressHydrationWarning
-    <html lang="en" suppressHydrationWarning> 
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* [!code ++] Wrap children with ThemeProvider */}
         <ThemeProvider
             attribute="class"
             defaultTheme="system"
