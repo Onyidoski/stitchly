@@ -5,14 +5,8 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Calendar, Search, Scissors, MoreHorizontal, ArrowRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Calendar, Search, Scissors } from "lucide-react"
+import { DeleteOrderButton } from "@/components/delete-order-button" // [1] IMPORT HERE
 
 export function OrdersTable({ orders }: { orders: any[] }) {
     const [search, setSearch] = useState("")
@@ -130,9 +124,10 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
+                                            {/* [2] ADD BUTTON HERE */}
+                                            <div className="flex justify-end pr-2">
+                                                <DeleteOrderButton orderId={order.id} />
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))

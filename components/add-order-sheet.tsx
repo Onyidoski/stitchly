@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Scissors, Loader2 } from "lucide-react"
 import { ImageUploader } from "@/components/image-uploader"
+import { toast } from "sonner" // [1] IMPORT TOAST
 
 export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
@@ -48,12 +49,13 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
         })
 
         if (!error) {
+          toast.success("New order created!") // [2] SUCCESS TOAST
           setOpen(false)
           setImageUrls([])
           router.refresh()
         } else {
             console.error(error)
-            alert("Error creating order")
+            toast.error("Failed to create order.") // [3] ERROR TOAST (replaced alert)
         }
       }
     }
@@ -62,6 +64,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
+      {/* ... rest of the JSX remains exactly the same ... */}
       <SheetTrigger asChild>
         <Button size="sm" className="gap-2 bg-slate-800">
           <Scissors className="h-4 w-4" /> New Order

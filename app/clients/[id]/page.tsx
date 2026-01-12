@@ -4,6 +4,7 @@ import { AddMeasurementSheet } from '@/components/add-measurement-sheet'
 import { AddOrderSheet } from '@/components/add-order-sheet'
 import { EditOrderSheet } from '@/components/edit-order-sheet'
 import { EditMeasurementSheet } from '@/components/edit-measurement-sheet'
+import { DeleteOrderButton } from '@/components/delete-order-button' // [1] IMPORT ADDED
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -42,10 +43,10 @@ export default async function ClientDetailsPage({ params }: PageProps) {
         .single()
 
     if (!client) {
-        return <NavShell businessName={businessName} userEmail={user.email || ''}><div>Client not found</div></NavShell>
+        return <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={0}><div>Client not found</div></NavShell>
     }
 
-    // 2. Fetch Active Orders Count (ADDED THIS)
+    // 2. Fetch Active Orders Count
     const { count: activeOrdersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
@@ -129,7 +130,10 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                                                 <Badge variant={order.status === 'ready' ? 'default' : 'outline'} className="capitalize">
                                                     {order.status}
                                                 </Badge>
+                                                
+                                                {/* ACTION BUTTONS */}
                                                 <EditOrderSheet order={order} />
+                                                <DeleteOrderButton orderId={order.id} /> {/* [2] BUTTON ADDED HERE */}
                                             </div>
                                         </div>
                                     </CardHeader>

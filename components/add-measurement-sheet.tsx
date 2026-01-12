@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Ruler, Loader2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner" // [1] IMPORT TOAST
 
 export function AddMeasurementSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
@@ -78,17 +79,20 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
         })
 
         if (!error) {
+          toast.success("Measurements added successfully") // [2] SUCCESS TOAST
           setOpen(false)
           router.refresh()
         } else {
             console.error(error)
+            toast.error("Failed to add measurements") // [3] ERROR TOAST
         }
       }
     }
     setLoading(false)
   }
 
-  // Helper component for form fields
+  // ... (Rest of component remains exactly the same) ...
+
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>

@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Edit2 } from "lucide-react"
+import { toast } from "sonner" // [1] IMPORT TOAST
 
-// Define the shape of the order data we need
 interface EditOrderProps {
     order: {
         id: string
@@ -27,7 +27,6 @@ export function EditOrderSheet({ order }: EditOrderProps) {
     const router = useRouter()
     const supabase = createClient()
 
-    // Local state for controlled inputs (Safe way to ensure values exist)
     const [status, setStatus] = useState(order.status)
     const [paymentStatus, setPaymentStatus] = useState(order.payment_status)
 
@@ -35,30 +34,29 @@ export function EditOrderSheet({ order }: EditOrderProps) {
         e.preventDefault()
         setLoading(true)
 
-        // We can still use FormData for simple inputs like paid_amount
         const formData = new FormData(e.currentTarget)
         const newPaidAmount = Number(formData.get("paid_amount"))
 
         const { error } = await supabase
             .from('orders')
             .update({
-                status: status, // Use state directly
-                payment_status: paymentStatus, // Use state directly
+                status: status,
+                payment_status: paymentStatus,
                 paid_amount: newPaidAmount
             })
             .eq('id', order.id)
 
         if (!error) {
+            toast.success("Order updated successfully") // [2] SUCCESS TOAST
             setOpen(false)
             router.refresh()
         } else {
             console.error("Error updating order", error)
-            alert("Error updating order")
+            toast.error("Failed to update order") // [3] ERROR TOAST
         }
         setLoading(false)
     }
 
-    // Helper to determine the default value for the amount input
     const getAmountDefaultValue = () => {
         if (paymentStatus === 'paid') return order.total_amount
         if (paymentStatus === 'unpaid') return 0
@@ -67,6 +65,7 @@ export function EditOrderSheet({ order }: EditOrderProps) {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
+            {/* ... rest of the JSX remains exactly the same ... */}
             <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Edit2 className="h-4 w-4" />
@@ -136,9 +135,7 @@ export function EditOrderSheet({ order }: EditOrderProps) {
                                 id="paid_amount"
                                 name="paid_amount"
                                 type="number"
-                                // This logic handles the auto-update
                                 defaultValue={getAmountDefaultValue()}
-                                // Key forces the input to re-render when status changes
                                 key={paymentStatus}
                             />
                         </div>

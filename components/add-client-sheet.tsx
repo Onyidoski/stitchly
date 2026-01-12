@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Loader2, User, Phone, Mail } from "lucide-react"
+import { toast } from "sonner" // [1] Add this import
 
 export function AddClientSheet() {
     const [open, setOpen] = useState(false)
@@ -26,11 +27,9 @@ export function AddClientSheet() {
         const email = formData.get("email") as string
         const gender = formData.get("gender") as string
 
-        // 1. Get current user
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
-            // 2. Fetch tenant_id from profile
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('tenant_id')
@@ -38,7 +37,6 @@ export function AddClientSheet() {
                 .single()
 
             if (profile?.tenant_id) {
-                // 3. Insert Client
                 const { error } = await supabase.from('clients').insert({
                     tenant_id: profile.tenant_id,
                     name,
@@ -48,9 +46,11 @@ export function AddClientSheet() {
                 })
 
                 if (!error) {
+                    toast.success("Client added successfully!") // [2] Success Toast
                     setOpen(false)
                     router.refresh()
                 } else {
+                    toast.error("Failed to add client. Please try again.") // [3] Error Toast
                     console.error("Error adding client:", error)
                 }
             }
@@ -60,7 +60,8 @@ export function AddClientSheet() {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
+            {/* ... rest of the JSX remains exactly the same ... */}
+             <SheetTrigger asChild>
                 <Button className="shadow-sm">
                     <Plus className="h-4 w-4 mr-2" /> Add Client
                 </Button>

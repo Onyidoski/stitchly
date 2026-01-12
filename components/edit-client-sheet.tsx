@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, User, Phone, Mail } from "lucide-react"
+import { toast } from "sonner" // [1] IMPORT TOAST
 
 interface EditClientSheetProps {
     client: any
@@ -45,9 +46,11 @@ export function EditClientSheet({ client, trigger }: EditClientSheetProps) {
             .eq('id', client.id)
 
         if (!error) {
+            toast.success("Client details updated!") // [2] SUCCESS TOAST
             setOpen(false)
             router.refresh()
         } else {
+            toast.error("Failed to update client.") // [3] ERROR TOAST
             console.error("Error updating client:", error)
         }
         setLoading(false)
@@ -55,6 +58,7 @@ export function EditClientSheet({ client, trigger }: EditClientSheetProps) {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
+           {/* ... rest of the JSX remains exactly the same ... */}
             <SheetTrigger asChild>
                 {trigger}
             </SheetTrigger>

@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { toast } from "sonner" // [1] IMPORT TOAST
 
 export function DeleteOrderButton({ orderId }: { orderId: string }) {
   const [open, setOpen] = useState(false)
@@ -32,11 +33,12 @@ export function DeleteOrderButton({ orderId }: { orderId: string }) {
       .eq('id', orderId)
 
     if (!error) {
-      setOpen(false) // Close the dialog on success
+      toast.success("Order deleted successfully") // [2] SUCCESS TOAST
+      setOpen(false) 
       router.refresh()
     } else {
       console.error("Error deleting order", error)
-      alert("Failed to delete order. Please try again.")
+      toast.error("Failed to delete order") // [3] ERROR TOAST
     }
     setLoading(false)
   }

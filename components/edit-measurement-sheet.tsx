@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { toast } from "sonner" // [1] IMPORT TOAST
 
 export function EditMeasurementSheet({ measurement }: { measurement: any }) {
   const [open, setOpen] = useState(false)
@@ -35,12 +36,10 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
 
     const formData = new FormData(e.currentTarget)
     
-    // Convert FormData to a plain object for Supabase
     const updates: any = {
       notes: formData.get("notes"),
     }
     
-    // Loop through all measurement fields to capture them dynamically
     const fields = [
       "round_shoulder", "round_armhole", "round_upper_bust", "shoulder", "bust_span", 
       "bust", "bust_point", "underbust", "underbust_point", "waist", "waist_point", 
@@ -62,11 +61,12 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
       .eq('id', measurement.id)
 
     if (!error) {
+      toast.success("Measurements updated!") // [2] SUCCESS TOAST
       setOpen(false)
       router.refresh()
     } else {
       console.error(error)
-      alert("Failed to update measurements")
+      toast.error("Failed to update measurements") // [3] ERROR TOAST
     }
     setLoading(false)
   }
@@ -80,15 +80,17 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
         .eq('id', measurement.id)
 
     if (!error) {
+        toast.success("Measurement deleted") // [4] SUCCESS TOAST
         setOpen(false)
         router.refresh()
     } else {
-        alert("Failed to delete")
+        toast.error("Failed to delete measurement") // [5] ERROR TOAST
     }
     setDeleteLoading(false)
   }
 
-  // Helper for fields
+  // ... (Rest of the JSX remains exactly the same) ...
+
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
