@@ -69,7 +69,8 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                 </div>
             </div>
 
-            <div className="rounded-md border overflow-hidden max-w-[calc(100vw-2rem)] md:max-w-full">
+            {/* --- DESKTOP VIEW (Table) --- */}
+            <div className="hidden md:block rounded-md border overflow-hidden max-w-[calc(100vw-2rem)] md:max-w-full">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[800px]">
                         <TableHeader className="bg-slate-50">
@@ -104,7 +105,6 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                             <div className="flex items-center gap-2 text-sm">
                                                 <Phone className="h-4 w-4" /> {client.phone || 'N/A'}
                                             </div>
-                                            {/* Address removed as it is not in schema */}
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
@@ -142,11 +142,72 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                     </Table>
                 </div>
             </div>
-            {filteredClients.length === 0 && searchTerm && (
-                <div className="p-8 text-center text-muted-foreground text-sm">
-                    No clients found matching "{searchTerm}"
-                </div>
-            )}
+
+            {/* --- MOBILE VIEW (Stacked List) --- */}
+            <div className="md:hidden">
+                {filteredClients.length > 0 ? (
+                    <div className="divide-y divide-slate-100">
+                        {filteredClients.map((client) => (
+                            <div
+                                key={client.id}
+                                className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors"
+                                onClick={() => router.push(`/clients/${client.id}`)}
+                            >
+                                {/* Header Row */}
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold shrink-0">
+                                            {client.name?.[0]?.toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-sm text-foreground">{client.name}</div>
+                                            <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                {client.email || 'No email'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Action Button */}
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => router.push(`/clients/${client.id}`)}>
+                                                    View Profile
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                    <EditClientSheet
+                                                        client={client}
+                                                        trigger={<span className="w-full cursor-pointer">Edit Details</span>}
+                                                    />
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+
+                                {/* Footer Row */}
+                                <div className="flex items-center justify-between pt-1">
+                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                                        {client.phone || 'N/A'}
+                                    </div>
+                                    <span className="capitalize px-2 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-600 font-medium">
+                                        {client.gender || 'Unspecified'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-8 text-center text-muted-foreground text-sm">
+                        No clients found matching "{searchTerm}"
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

@@ -3,10 +3,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table" //
+import { Input } from "@/components/ui/input" //
 import { Calendar, Search, Scissors } from "lucide-react"
-import { DeleteOrderButton } from "@/components/delete-order-button" // [1] IMPORT HERE
+import { DeleteOrderButton } from "@/components/delete-order-button" //
 
 export function OrdersTable({ orders }: { orders: any[] }) {
     const [search, setSearch] = useState("")
@@ -61,7 +61,8 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                 </div>
             </div>
 
-            <div className="rounded-md border overflow-hidden max-w-[calc(100vw-2rem)] md:max-w-full">
+            {/* --- DESKTOP VIEW (Table) --- */}
+            <div className="hidden md:block rounded-md border overflow-hidden max-w-[calc(100vw-2rem)] md:max-w-full">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[800px]">
                         <TableHeader className="bg-slate-50">
@@ -124,7 +125,6 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {/* [2] ADD BUTTON HERE */}
                                             <div className="flex justify-end pr-2">
                                                 <DeleteOrderButton orderId={order.id} />
                                             </div>
@@ -141,6 +141,63 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                         </TableBody>
                     </Table>
                 </div>
+            </div>
+
+            {/* --- MOBILE VIEW (Stacked List) --- */}
+            <div className="md:hidden">
+                {filteredOrders.length > 0 ? (
+                    <div className="divide-y divide-slate-100">
+                        {filteredOrders.map((order) => (
+                            <div key={order.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
+                                {/* Header Row */}
+                                <div className="flex justify-between items-start">
+                                    <Link href={`/clients/${order.client_id}`} className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                                            {/* @ts-ignore */}
+                                            {order.clients?.name?.[0]?.toUpperCase() || 'C'}
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-sm text-foreground">
+                                                {/* @ts-ignore */}
+                                                {order.clients?.name || 'Unknown'}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">#{order.id.slice(0, 6).toUpperCase()}</div>
+                                        </div>
+                                    </Link>
+                                    <div className="text-right">
+                                        <div className="font-bold text-sm">₦{order.total_amount?.toLocaleString()}</div>
+                                        <div className={`text-[10px] font-bold ${order.payment_status === 'paid' ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {order.payment_status === 'paid' ? 'PAID' : 'UNPAID'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Description Box */}
+                                <div className="text-sm text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100 line-clamp-2">
+                                    {order.fabric_description || 'No description provided.'}
+                                </div>
+
+                                {/* Footer Row */}
+                                <div className="flex items-center justify-between pt-1">
+                                    <div className="flex items-center gap-3">
+                                        <Badge variant="secondary" className={`${getStatusColor(order.status)} capitalize text-[10px] px-2 py-0.5`}>
+                                            {order.status}
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            {new Date(order.delivery_date).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <DeleteOrderButton orderId={order.id} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-8 text-center text-muted-foreground">
+                        No orders found matching "{search}"
+                    </div>
+                )}
             </div>
         </div>
     )
