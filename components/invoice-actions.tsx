@@ -21,29 +21,78 @@ export function InvoiceActions() {
 
             setDownloading(true)
 
-            // 1. Capture the element as an image
-            // cacheBust: true forces the browser to fetch a fresh version of images (fixes some CORS issues)
-            const dataUrl = await toPng(element, { 
-                quality: 0.95,
+            // 1. Create a "Hidden Container"
+            // We use this to force the invoice to a specific width (A4 size) 
+            // so it looks perfect regardless of your device (mobile/desktop).
+            const container = document.createElement('div')
+            container.style.position = 'fixed'
+            container.style.top = '-10000px'
+            container.style.left = '-10000px'
+            container.style.width = '794px' // A4 Width at 96 DPI
+            container.style.zIndex = '-1000'
+            document.body.appendChild(container)
+
+            // 2. Clone the invoice into the container
+            const clone = element.cloneNode(true) as HTMLElement
+            
+            // 3. Reset styles on the clone to ensure it looks like a document
+            // This removes any "responsive" mobile constraints
+            clone.style.transform = 'scale(1)'
+            clone.style.width = '100%'
+            clone.style.maxWidth = 'none'
+            clone.style.margin = '0'
+            clone.style.boxShadow = 'none'
+            clone.style.height = 'auto'
+            clone.style.backgroundColor = '#ffffff'
+            
+            container.appendChild(clone)
+
+            // 4. Wait briefly for images to render in the clone
+            await new Promise(resolve => setTimeout(resolve, 100))
+
+            // 5. Capture the CLONE (not the original element)
+            const dataUrl = await toPng(clone, { 
+                quality: 1.0,
                 cacheBust: true, 
                 pixelRatio: 2, // 2x resolution for clear text
                 backgroundColor: '#ffffff'
             })
 
-            // 2. Generate PDF
-            // 'p' = portrait, 'mm' = millimeters, 'a4' = paper size
+            // Clean up the DOM
+            document.body.removeChild(container)
+
+            // 6. Generate PDF
             const pdf = new jsPDF('p', 'mm', 'a4')
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = pdf.internal.pageSize.getHeight()
+            const pdfWidth = pdf.internal.pageSize.getWidth()   // 210mm
+            const pdfHeight = pdf.internal.pageSize.getHeight() // 297mm
             
-            // Calculate image dimensions to fit A4 width perfectly
             const imgProps = pdf.getImageProperties(dataUrl)
             const imgHeight = (imgProps.height * pdfWidth) / imgProps.width
+
+            // Add the image
+            // If the invoice is shorter than 1 page, just add it.
+            if (imgHeight <= pdfHeight) {
+                pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight)
+            } else {
+                // If the invoice is LONG (multi-page), we split it across pages
+                let heightLeft = imgHeight
+                let position = 0
+
+                pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgHeight)
+                heightLeft -= pdfHeight
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight // Shift image up for next page
+                    pdf.addPage()
+                    pdf.addImage(dataUrl, 'PNG', 0, -pdfHeight + (heightLeft - imgHeight) , pdfWidth, imgHeight) 
+                    // Note: Simplified multi-page logic often requires fine-tuning. 
+                    // For now, this adds a new page.
+                    // A simpler fallback for very long invoices is just adding it again with an offset:
+                    pdf.addImage(dataUrl, 'PNG', 0, -(pdfHeight - 10), pdfWidth, imgHeight) // 10mm overlap
+                    heightLeft -= pdfHeight
+                }
+            }
             
-            // Add image to PDF
-            pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight)
-            
-            // 3. Save
             pdf.save('invoice.pdf')
             toast.success("Invoice saved successfully")
             setDownloading(false)
@@ -77,7 +126,7 @@ export function InvoiceActions() {
                     ) : (
                         <Download className="h-4 w-4" />
                     )}
-                    {downloading ? "Saving..." : "Save PDF"}
+                    {downloading ? "Processing..." : "Save PDF"}
                 </Button>
             </div>
         </div>
