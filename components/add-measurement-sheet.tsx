@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Ruler, Loader2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { toast } from "sonner" // [1] IMPORT TOAST
+import { toast } from "sonner"
 
 export function AddMeasurementSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
@@ -79,19 +79,17 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
         })
 
         if (!error) {
-          toast.success("Measurements added successfully") // [2] SUCCESS TOAST
+          toast.success("Measurements added successfully")
           setOpen(false)
           router.refresh()
         } else {
             console.error(error)
-            toast.error("Failed to add measurements") // [3] ERROR TOAST
+            toast.error("Failed to add measurements")
         }
       }
     }
     setLoading(false)
   }
-
-  // ... (Rest of component remains exactly the same) ...
 
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
@@ -107,17 +105,21 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           <Ruler className="h-4 w-4" /> Add Measurements
         </Button>
       </SheetTrigger>
-      <SheetContent className="sm:max-w-[600px] sm:px-0">
-        <SheetHeader className="px-6">
+      {/* FIX 1: Ensure SheetContent is full height and flex column */}
+      <SheetContent className="sm:max-w-[600px] sm:px-0 flex flex-col h-full">
+        <SheetHeader className="px-6 flex-none">
           <SheetTitle>New Measurements</SheetTitle>
           <SheetDescription>
             Enter comprehensive measurement details.
           </SheetDescription>
         </SheetHeader>
         
-        <form onSubmit={handleSubmit} className="flex flex-col h-full pb-20">
-          <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)]">
-            <div className="space-y-8">
+        {/* FIX 2: Form takes full height with overflow-hidden to contain the scroll area */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          
+          {/* FIX 3: ScrollArea uses flex-1 instead of hardcoded calc() height */}
+          <ScrollArea className="flex-1 px-6 py-4">
+            <div className="space-y-8 pb-4">
                 
                 {/* 1. BODY MEASUREMENTS */}
                 <div>
@@ -143,11 +145,10 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
                     </div>
                 </div>
 
-                {/* 2. SLEEVE MEASUREMENTS (Side by Side) */}
+                {/* 2. SLEEVE MEASUREMENTS */}
                 <div>
                     <h4 className="font-medium text-primary mb-4 border-b pb-1">Sleeves</h4>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        {/* Header Row */}
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
 
@@ -187,8 +188,8 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
             </div>
           </ScrollArea>
 
-          {/* ADDED pb-10 here for spacing */}
-          <SheetFooter className="px-6 pt-4 pb-10 border-t">
+          {/* FIX 4: Footer uses standard padding and is pushed to bottom naturally by flex layout */}
+          <SheetFooter className="px-6 py-4 border-t mt-auto flex-none bg-white">
             <Button type="submit" disabled={loading} className="w-full">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Measurements
