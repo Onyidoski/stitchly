@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Ruler, Loader2 } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
 
 export function AddMeasurementSheet({ clientId }: { clientId: string }) {
@@ -94,7 +93,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
-      <Input id={id} name={id} type="number" step="0.1" className="h-8" />
+      <Input id={id} name={id} type="number" step="0.1" className="h-9 bg-slate-50 border-slate-200" />
     </div>
   )
 
@@ -105,25 +104,32 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           <Ruler className="h-4 w-4" /> Add Measurements
         </Button>
       </SheetTrigger>
-      {/* FIX 1: Ensure SheetContent is full height and flex column */}
-      <SheetContent className="sm:max-w-[600px] sm:px-0 flex flex-col h-full">
-        <SheetHeader className="px-6 flex-none">
+      {/* FIX 1: h-[100dvh] forces the sheet to respect the mobile browser height strictly.
+         p-0 removes default padding that messes up full-width layouts.
+      */}
+      <SheetContent className="w-full sm:max-w-[600px] h-[100dvh] p-0 flex flex-col bg-white">
+        
+        {/* HEADER: Fixed at top */}
+        <SheetHeader className="px-6 py-4 border-b flex-none">
           <SheetTitle>New Measurements</SheetTitle>
           <SheetDescription>
             Enter comprehensive measurement details.
           </SheetDescription>
         </SheetHeader>
         
-        {/* FIX 2: Form takes full height with overflow-hidden to contain the scroll area */}
+        {/* FORM: Takes all remaining space */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           
-          {/* FIX 3: ScrollArea uses flex-1 instead of hardcoded calc() height */}
-          <ScrollArea className="flex-1 px-6 py-4">
+          {/* FIX 2: NATIVE SCROLLING
+             Replaced <ScrollArea> with a simple div using 'overflow-y-auto'.
+             This is 100% reliable on mobile phones.
+          */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-8 pb-4">
                 
                 {/* 1. BODY MEASUREMENTS */}
                 <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1">Body / Top</h4>
+                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Body / Top</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <Field id="round_shoulder" label="Round Shoulder" />
                         <Field id="round_armhole" label="Round Armhole" />
@@ -147,7 +153,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
 
                 {/* 2. SLEEVE MEASUREMENTS */}
                 <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1">Sleeves</h4>
+                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Sleeves</h4>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
@@ -168,7 +174,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
 
                 {/* 3. TROUSER MEASUREMENTS */}
                 <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1">Trouser / Bottom</h4>
+                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Trouser / Bottom</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <Field id="trouser_waist" label="Trouser Waist" />
                         <Field id="trouser_hips" label="Trouser Hips" />
@@ -186,10 +192,10 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
                     <Input id="notes" name="notes" placeholder="Any specific requirements..." />
                 </div>
             </div>
-          </ScrollArea>
+          </div>
 
-          {/* FIX 4: Footer uses standard padding and is pushed to bottom naturally by flex layout */}
-          <SheetFooter className="px-6 py-4 border-t mt-auto flex-none bg-white">
+          {/* FOOTER: Fixed at bottom */}
+          <SheetFooter className="px-6 py-4 border-t flex-none bg-white">
             <Button type="submit" disabled={loading} className="w-full">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Measurements
