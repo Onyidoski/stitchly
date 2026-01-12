@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import NavShell from '@/components/nav-shell'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { SettingsForm } from '@/components/settings-form'
+import { NotificationManager } from '@/components/notification-manager' // [1] IMPORT NEW COMPONENT
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -34,6 +35,7 @@ export default async function SettingsPage() {
                     <p className="text-muted-foreground">Manage your business profile and branding.</p>
                 </div>
 
+                {/* 1. BUSINESS PROFILE SETTINGS */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Business Profile</CardTitle>
@@ -43,6 +45,19 @@ export default async function SettingsPage() {
                     </CardHeader>
                     <CardContent>
                         <SettingsForm tenant={tenantData} />
+                    </CardContent>
+                </Card>
+
+                {/* 2. PUSH NOTIFICATION SETTINGS */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Notifications</CardTitle>
+                        <CardDescription>
+                            Manage how you receive alerts for upcoming deliveries.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <NotificationManager />
                     </CardContent>
                 </Card>
             </div>

@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Edit2 } from "lucide-react"
-import { toast } from "sonner" // [1] IMPORT TOAST
+import { Loader2, Edit2, CalendarIcon } from "lucide-react"
+import { toast } from "sonner"
 
 interface EditOrderProps {
     order: {
@@ -18,6 +18,7 @@ interface EditOrderProps {
         payment_status: string
         total_amount: number
         paid_amount: number
+        delivery_date: string // [1] Added this
     }
 }
 
@@ -36,23 +37,25 @@ export function EditOrderSheet({ order }: EditOrderProps) {
 
         const formData = new FormData(e.currentTarget)
         const newPaidAmount = Number(formData.get("paid_amount"))
+        const newDeliveryDate = formData.get("delivery_date") as string // [2] Get date
 
         const { error } = await supabase
             .from('orders')
             .update({
                 status: status,
                 payment_status: paymentStatus,
-                paid_amount: newPaidAmount
+                paid_amount: newPaidAmount,
+                delivery_date: newDeliveryDate // [3] Update in DB
             })
             .eq('id', order.id)
 
         if (!error) {
-            toast.success("Order updated successfully") // [2] SUCCESS TOAST
+            toast.success("Order updated successfully")
             setOpen(false)
             router.refresh()
         } else {
             console.error("Error updating order", error)
-            toast.error("Failed to update order") // [3] ERROR TOAST
+            toast.error("Failed to update order")
         }
         setLoading(false)
     }
@@ -63,9 +66,11 @@ export function EditOrderSheet({ order }: EditOrderProps) {
         return order.paid_amount || 0
     }
 
+    // Helper to format date for Input type="date" (YYYY-MM-DD)
+    const formattedDate = order.delivery_date ? new Date(order.delivery_date).toISOString().split('T')[0] : ''
+
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            {/* ... rest of the JSX remains exactly the same ... */}
             <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Edit2 className="h-4 w-4" />
@@ -77,10 +82,26 @@ export function EditOrderSheet({ order }: EditOrderProps) {
                 <SheetHeader>
                     <SheetTitle>Manage Order</SheetTitle>
                     <SheetDescription>
-                        Update progress and payments.
+                        Update progress, dates, and payments.
                     </SheetDescription>
                 </SheetHeader>
                 <form onSubmit={handleSubmit} className="grid gap-6 py-6">
+
+                    {/* [4] DELIVERY DATE FIELD */}
+                    <div className="space-y-2">
+                        <Label htmlFor="delivery_date">Delivery Date</Label>
+                        <div className="relative">
+                            <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                id="delivery_date" 
+                                name="delivery_date" 
+                                type="date" 
+                                className="pl-9"
+                                defaultValue={formattedDate} 
+                                required
+                            />
+                        </div>
+                    </div>
 
                     {/* WORKFLOW STATUS */}
                     <div className="space-y-2">

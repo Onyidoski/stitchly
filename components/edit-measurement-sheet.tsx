@@ -20,7 +20,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { toast } from "sonner" // [1] IMPORT TOAST
+import { toast } from "sonner" 
+
+// [FIX] Component defined OUTSIDE to prevent re-mounting on state changes
+const MeasurementField = ({ id, label, measurement }: { id: string, label: string, measurement: any }) => (
+  <div className="space-y-2">
+    <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
+    <Input 
+      id={id} 
+      name={id} 
+      type="number" 
+      step="0.1" 
+      className="h-8" 
+      defaultValue={measurement[id] || ''} 
+    />
+  </div>
+)
 
 export function EditMeasurementSheet({ measurement }: { measurement: any }) {
   const [open, setOpen] = useState(false)
@@ -61,12 +76,12 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
       .eq('id', measurement.id)
 
     if (!error) {
-      toast.success("Measurements updated!") // [2] SUCCESS TOAST
+      toast.success("Measurements updated!") 
       setOpen(false)
       router.refresh()
     } else {
       console.error(error)
-      toast.error("Failed to update measurements") // [3] ERROR TOAST
+      toast.error("Failed to update measurements") 
     }
     setLoading(false)
   }
@@ -80,30 +95,14 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
         .eq('id', measurement.id)
 
     if (!error) {
-        toast.success("Measurement deleted") // [4] SUCCESS TOAST
+        toast.success("Measurement deleted") 
         setOpen(false)
         router.refresh()
     } else {
-        toast.error("Failed to delete measurement") // [5] ERROR TOAST
+        toast.error("Failed to delete measurement") 
     }
     setDeleteLoading(false)
   }
-
-  // ... (Rest of the JSX remains exactly the same) ...
-
-  const Field = ({ id, label }: { id: string, label: string }) => (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
-      <Input 
-        id={id} 
-        name={id} 
-        type="number" 
-        step="0.1" 
-        className="h-8" 
-        defaultValue={measurement[id] || ''} 
-      />
-    </div>
-  )
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -127,23 +126,23 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
                 <div>
                     <h4 className="font-medium text-primary mb-4 border-b pb-1">Body / Top</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <Field id="round_shoulder" label="Round Shoulder" />
-                        <Field id="round_armhole" label="Round Armhole" />
-                        <Field id="round_upper_bust" label="Round Upper Bust" />
-                        <Field id="shoulder" label="Shoulder" />
-                        <Field id="bust_span" label="Bust Span" />
-                        <Field id="bust" label="Bust" />
-                        <Field id="bust_point" label="Bust Point" />
-                        <Field id="underbust" label="Underbust" />
-                        <Field id="underbust_point" label="Underbust Point" />
-                        <Field id="waist" label="Waist" />
-                        <Field id="waist_point" label="Waist Point" />
-                        <Field id="hip" label="Hips" />
-                        <Field id="hip_point" label="Hip Point" />
-                        <Field id="back_length" label="Back Length" />
-                        <Field id="knee_length" label="Knee Length" />
-                        <Field id="blouse_length" label="Blouse Length" />
-                        <Field id="full_length" label="Full Length" />
+                        <MeasurementField id="round_shoulder" label="Round Shoulder" measurement={measurement} />
+                        <MeasurementField id="round_armhole" label="Round Armhole" measurement={measurement} />
+                        <MeasurementField id="round_upper_bust" label="Round Upper Bust" measurement={measurement} />
+                        <MeasurementField id="shoulder" label="Shoulder" measurement={measurement} />
+                        <MeasurementField id="bust_span" label="Bust Span" measurement={measurement} />
+                        <MeasurementField id="bust" label="Bust" measurement={measurement} />
+                        <MeasurementField id="bust_point" label="Bust Point" measurement={measurement} />
+                        <MeasurementField id="underbust" label="Underbust" measurement={measurement} />
+                        <MeasurementField id="underbust_point" label="Underbust Point" measurement={measurement} />
+                        <MeasurementField id="waist" label="Waist" measurement={measurement} />
+                        <MeasurementField id="waist_point" label="Waist Point" measurement={measurement} />
+                        <MeasurementField id="hip" label="Hips" measurement={measurement} />
+                        <MeasurementField id="hip_point" label="Hip Point" measurement={measurement} />
+                        <MeasurementField id="back_length" label="Back Length" measurement={measurement} />
+                        <MeasurementField id="knee_length" label="Knee Length" measurement={measurement} />
+                        <MeasurementField id="blouse_length" label="Blouse Length" measurement={measurement} />
+                        <MeasurementField id="full_length" label="Full Length" measurement={measurement} />
                     </div>
                 </div>
 
@@ -154,14 +153,14 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
 
-                        <Field id="sleeve_length_short" label="Short Sleeve Length" />
-                        <Field id="round_sleeve_short" label="Round Short Sleeve" />
-                        <Field id="sleeve_length_elbow" label="Elbow Sleeve Length" />
-                        <Field id="round_sleeve_elbow" label="Round Elbow Sleeve" />
-                        <Field id="sleeve_length_3_4" label="3/4 Sleeve Length" />
-                        <Field id="round_sleeve_3_4" label="Round 3/4 Sleeve" />
-                        <Field id="sleeve_length_full" label="Full Sleeve Length" />
-                        <Field id="round_sleeve_full" label="Round Full Sleeve" />
+                        <MeasurementField id="sleeve_length_short" label="Short Sleeve Length" measurement={measurement} />
+                        <MeasurementField id="round_sleeve_short" label="Round Short Sleeve" measurement={measurement} />
+                        <MeasurementField id="sleeve_length_elbow" label="Elbow Sleeve Length" measurement={measurement} />
+                        <MeasurementField id="round_sleeve_elbow" label="Round Elbow Sleeve" measurement={measurement} />
+                        <MeasurementField id="sleeve_length_3_4" label="3/4 Sleeve Length" measurement={measurement} />
+                        <MeasurementField id="round_sleeve_3_4" label="Round 3/4 Sleeve" measurement={measurement} />
+                        <MeasurementField id="sleeve_length_full" label="Full Sleeve Length" measurement={measurement} />
+                        <MeasurementField id="round_sleeve_full" label="Round Full Sleeve" measurement={measurement} />
                     </div>
                 </div>
 
@@ -169,14 +168,14 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
                 <div>
                     <h4 className="font-medium text-primary mb-4 border-b pb-1">Trouser / Bottom</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <Field id="trouser_waist" label="Trouser Waist" />
-                        <Field id="trouser_hips" label="Trouser Hips" />
-                        <Field id="trouser_hip_point" label="Hip Point (Waist-Hip)" />
-                        <Field id="thigh" label="Laps / Thigh" />
-                        <Field id="round_knee" label="Round Knee" />
-                        <Field id="ankle" label="Ankle / Foot" />
-                        <Field id="trouser_length" label="Trouser Length" />
-                        <Field id="pallazo_length" label="Pallazo Length" />
+                        <MeasurementField id="trouser_waist" label="Trouser Waist" measurement={measurement} />
+                        <MeasurementField id="trouser_hips" label="Trouser Hips" measurement={measurement} />
+                        <MeasurementField id="trouser_hip_point" label="Hip Point (Waist-Hip)" measurement={measurement} />
+                        <MeasurementField id="thigh" label="Laps / Thigh" measurement={measurement} />
+                        <MeasurementField id="round_knee" label="Round Knee" measurement={measurement} />
+                        <MeasurementField id="ankle" label="Ankle / Foot" measurement={measurement} />
+                        <MeasurementField id="trouser_length" label="Trouser Length" measurement={measurement} />
+                        <MeasurementField id="pallazo_length" label="Pallazo Length" measurement={measurement} />
                     </div>
                 </div>
 
@@ -187,7 +186,6 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
             </div>
           </ScrollArea>
 
-          {/* ADDED pb-10 here */}
           <SheetFooter className="px-6 pt-4 pb-10 border-t flex flex-row justify-between gap-4">
             
             {/* DELETE BUTTON (Left) */}
