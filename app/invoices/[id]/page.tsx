@@ -33,8 +33,6 @@ export default async function InvoiceDetailsPage({
     const dueDate = new Date(order.delivery_date).toLocaleDateString()
 
     return (
-        // FIX: Removed 'md:px-0'. Now uses 'min-h-screen bg-slate-50 p-4 md:p-8'
-        // This ensures consistent padding on mobile, tablet, and desktop.
         <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
             
             <InvoiceActions />
@@ -54,7 +52,7 @@ export default async function InvoiceDetailsPage({
                                     alt="Logo" 
                                     fill 
                                     className="object-contain p-1"
-                                    unoptimized 
+                                    // [FIX] Removed 'unoptimized' to fix CORS error for PDF generation
                                 />
                             ) : (
                                 businessName.charAt(0)
