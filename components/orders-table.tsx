@@ -22,18 +22,18 @@ export function OrdersTable({ orders }: { orders: any[] }) {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'delivered': return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
-            case 'ready': return 'bg-blue-100 text-blue-700 hover:bg-blue-100'
-            case 'processing': return 'bg-amber-100 text-amber-700 hover:bg-amber-100'
-            case 'cancelled': return 'bg-red-100 text-red-700 hover:bg-red-100'
-            default: return 'bg-slate-100 text-slate-700 hover:bg-slate-100'
+            case 'delivered': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+            case 'ready': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+            case 'processing': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+            case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+            default: return 'bg-muted text-muted-foreground'
         }
     }
 
     if (orders.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg bg-white">
-                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg bg-card">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
                     <Scissors className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold">No orders yet</h3>
@@ -51,7 +51,7 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search orders..."
-                        className="pl-9 h-9 bg-slate-50 border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary w-full"
+                        className="pl-9 h-9 bg-muted/50 border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary w-full"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -65,7 +65,7 @@ export function OrdersTable({ orders }: { orders: any[] }) {
             <div className="hidden md:block rounded-md border overflow-hidden max-w-[calc(100vw-2rem)] md:max-w-full">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[800px]">
-                        <TableHeader className="bg-slate-50">
+                        <TableHeader className="bg-slate-100 dark:bg-slate-800/50">
                             <TableRow>
                                 <TableHead className="pl-6 w-[250px]">Client / Order</TableHead>
                                 <TableHead>Style Detail</TableHead>
@@ -78,7 +78,7 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                         <TableBody>
                             {filteredOrders.length > 0 ? (
                                 filteredOrders.map((order) => (
-                                    <TableRow key={order.id} className="group hover:bg-slate-50/80 transition-colors border-0">
+                                    <TableRow key={order.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-0">
                                         <TableCell className="pl-6 font-medium">
                                             <Link href={`/clients/${order.client_id}`} className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
@@ -146,9 +146,9 @@ export function OrdersTable({ orders }: { orders: any[] }) {
             {/* --- MOBILE VIEW (Stacked List) --- */}
             <div className="md:hidden">
                 {filteredOrders.length > 0 ? (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-border">
                         {filteredOrders.map((order) => (
-                            <div key={order.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
+                            <div key={order.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                 {/* Header Row */}
                                 <div className="flex justify-between items-start">
                                     <Link href={`/clients/${order.client_id}`} className="flex items-center gap-3">
@@ -173,7 +173,7 @@ export function OrdersTable({ orders }: { orders: any[] }) {
                                 </div>
 
                                 {/* Description Box */}
-                                <div className="text-sm text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100 line-clamp-2">
+                                <div className="text-sm text-muted-foreground bg-muted p-2.5 rounded-lg border border-border line-clamp-2">
                                     {order.fabric_description || 'No description provided.'}
                                 </div>
 

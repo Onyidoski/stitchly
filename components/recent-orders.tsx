@@ -1,3 +1,4 @@
+// components/recent-orders.tsx
 'use client'
 
 import { useRouter } from "next/navigation"
@@ -20,18 +21,17 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
     return (
         <div className="space-y-4">
             {orders.map((order) => {
-                // Robust client name handling
                 const clientName = Array.isArray(order.clients)
                     ? order.clients[0]?.name
                     : order.clients?.name || 'Unknown'
 
-                // Determine color based on index or status for variety
                 const isPositive = order.status !== 'cancelled'
 
                 return (
                     <div
                         key={order.id}
-                        className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                        // [FIX] Changed hover:bg-slate-50 to hover:bg-accent for dark mode support
+                        className="flex items-center justify-between p-2 hover:bg-accent rounded-lg cursor-pointer transition-colors"
                         onClick={() => router.push(`/clients/${order.client_id}`)}
                     >
                         <div className="flex items-center gap-3">
@@ -48,7 +48,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                             </div>
                         </div>
 
-                        <div className={`text-sm font-bold block ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+                        <div className={`text-sm font-bold block ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                             {isPositive ? '+' : '-'}₦{order.total_amount?.toLocaleString()}
                         </div>
                     </div>

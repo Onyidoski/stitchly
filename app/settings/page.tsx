@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import NavShell from '@/components/nav-shell'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { SettingsForm } from '@/components/settings-form'
-import { NotificationManager } from '@/components/notification-manager' // [1] IMPORT NEW COMPONENT
+import { NotificationManager } from '@/components/notification-manager'
+import { ThemeSelector } from '@/components/theme-selector' // [1] Import ThemeSelector
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -24,9 +25,9 @@ export default async function SettingsPage() {
     const tenantData = Array.isArray(tenant) ? tenant[0] : tenant
 
     return (
-        <NavShell 
-            businessName={tenantData?.business_name || 'Stitchly'} 
-            userEmail={user.email || ''} 
+        <NavShell
+            businessName={tenantData?.business_name || 'Stitchly'}
+            userEmail={user.email || ''}
             activeOrdersCount={0}
         >
             <div className="flex flex-col gap-6 max-w-2xl">
@@ -58,6 +59,27 @@ export default async function SettingsPage() {
                     </CardHeader>
                     <CardContent>
                         <NotificationManager />
+                    </CardContent>
+                </Card>
+
+                {/* 3. APPEARANCE SETTINGS */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Appearance</CardTitle>
+                        <CardDescription>
+                            Customize the interface theme.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border rounded-lg bg-card">
+                            <div className="space-y-0.5">
+                                <h3 className="font-medium text-base">Theme Preferences</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Choose your preferred interface appearance.
+                                </p>
+                            </div>
+                            <ThemeSelector />
+                        </div>
                     </CardContent>
                 </Card>
             </div>

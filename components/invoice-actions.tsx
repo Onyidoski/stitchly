@@ -6,10 +6,12 @@ import Link from "next/link"
 import { useState } from "react"
 import { toPng } from 'html-to-image'
 import jsPDF from 'jspdf'
-import { toast } from "sonner" 
+import { toast } from "sonner"
+import { useTheme } from "next-themes" // [1] Import useTheme
 
 export function InvoiceActions() {
     const [downloading, setDownloading] = useState(false)
+    const { theme, setTheme, resolvedTheme } = useTheme() // [2] Use hook
 
     const handleDownload = async () => {
         try {
@@ -20,6 +22,21 @@ export function InvoiceActions() {
             }
 
             setDownloading(true)
+
+            // 0. CHECK THEME & FLICKER CONTROL
+            // We use next-themes to toggle.
+            // Capture current resolved theme (light/dark)
+            const wasDark = resolvedTheme === 'dark'
+
+            // Small delay to let the overlay render
+            await new Promise(resolve => setTimeout(resolve, 50))
+
+            if (wasDark) {
+                // Force Light Mode for capture
+                document.documentElement.classList.remove('dark')
+                // We also manipulate the DOM class directly for speed, 
+                // as setTheme might be async/debounced by React.
+            }
 
             // 1. Create a "Hidden Container"
             // We use this to force the invoice to a specific width (A4 size) 
@@ -34,7 +51,7 @@ export function InvoiceActions() {
 
             // 2. Clone the invoice into the container
             const clone = element.cloneNode(true) as HTMLElement
-            
+
             // 3. Reset styles on the clone to ensure it looks like a document
             // This removes any "responsive" mobile constraints
             clone.style.transform = 'scale(1)'
@@ -44,16 +61,16 @@ export function InvoiceActions() {
             clone.style.boxShadow = 'none'
             clone.style.height = 'auto'
             clone.style.backgroundColor = '#ffffff'
-            
+
             container.appendChild(clone)
 
             // 4. Wait briefly for images to render in the clone
             await new Promise(resolve => setTimeout(resolve, 100))
 
             // 5. Capture the CLONE (not the original element)
-            const dataUrl = await toPng(clone, { 
+            const dataUrl = await toPng(clone, {
                 quality: 1.0,
-                cacheBust: true, 
+                cacheBust: true,
                 pixelRatio: 2, // 2x resolution for clear text
                 backgroundColor: '#ffffff'
             })
@@ -65,7 +82,7 @@ export function InvoiceActions() {
             const pdf = new jsPDF('p', 'mm', 'a4')
             const pdfWidth = pdf.internal.pageSize.getWidth()   // 210mm
             const pdfHeight = pdf.internal.pageSize.getHeight() // 297mm
-            
+
             const imgProps = pdf.getImageProperties(dataUrl)
             const imgHeight = (imgProps.height * pdfWidth) / imgProps.width
 
@@ -84,7 +101,7 @@ export function InvoiceActions() {
                 while (heightLeft >= 0) {
                     position = heightLeft - imgHeight // Shift image up for next page
                     pdf.addPage()
-                    pdf.addImage(dataUrl, 'PNG', 0, -pdfHeight + (heightLeft - imgHeight) , pdfWidth, imgHeight) 
+                    pdf.addImage(dataUrl, 'PNG', 0, -pdfHeight + (heightLeft - imgHeight), pdfWidth, imgHeight)
                     // Note: Simplified multi-page logic often requires fine-tuning. 
                     // For now, this adds a new page.
                     // A simpler fallback for very long invoices is just adding it again with an offset:
@@ -92,16 +109,34 @@ export function InvoiceActions() {
                     heightLeft -= pdfHeight
                 }
             }
-            
+
+            pdf.save('invoice.pdf')
             pdf.save('invoice.pdf')
             toast.success("Invoice saved successfully")
+
+            // 7. Restore Theme
+            if (wasDark) {
+                document.documentElement.classList.add('dark')
+            }
+
             setDownloading(false)
 
         } catch (error: any) {
             console.error("PDF generation failed", error)
             toast.error("Failed to generate PDF.")
             setDownloading(false)
+
+            // Safety check: Restore if needed
+            if (resolvedTheme === 'dark') {
+                document.documentElement.classList.add('dark')
+            }
         }
+    }
+
+    // Helper to detect dark mode safely
+    const isDarkMode = () => {
+        if (typeof window === 'undefined') return false
+        return document.documentElement.classList.contains('dark')
     }
 
     return (
@@ -115,9 +150,9 @@ export function InvoiceActions() {
                 <Button variant="outline" size="sm" className="gap-2" onClick={() => window.location.href = 'mailto:?subject=Invoice'}>
                     <Mail className="h-4 w-4" /> Email
                 </Button>
-                <Button 
-                    size="sm" 
-                    className="gap-2" 
+                <Button
+                    size="sm"
+                    className="gap-2"
                     onClick={handleDownload}
                     disabled={downloading}
                 >
@@ -129,6 +164,19 @@ export function InvoiceActions() {
                     {downloading ? "Processing..." : "Save PDF"}
                 </Button>
             </div>
+
+            {/* OVERLAY for smooth theme transition */}
+            {downloading && (
+                <div className="fixed inset-0 z-[9999] bg-background/80 backdrop-blur-sm flex items-center justify-center transition-all duration-200">
+                    <div className="bg-card border shadow-lg rounded-xl p-6 flex flex-col items-center gap-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="text-center">
+                            <p className="text-lg font-semibold">Generating PDF</p>
+                            <p className="text-sm text-muted-foreground">Preparing your document...</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

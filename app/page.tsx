@@ -126,11 +126,13 @@ export default async function Dashboard() {
 
         {/* RECENT ORDERS */}
         <div className="grid gap-6 md:grid-cols-1">
-          <Card className="shadow-sm border-none bg-white">
+          {/* [FIX] Changed bg-white to bg-card so it responds to dark mode */}
+          <Card className="shadow-sm border-none bg-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">Recent Orders</CardTitle>
               <Link href="/orders">
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 cursor-pointer">
+                {/* [FIX] Added dark mode styles for the badge */}
+                <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-pointer">
                   View All
                 </Badge>
               </Link>

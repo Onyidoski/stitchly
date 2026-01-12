@@ -24,9 +24,9 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    
+
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -54,8 +54,8 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           setImageUrls([])
           router.refresh()
         } else {
-            console.error(error)
-            toast.error("Failed to create order.") // [3] ERROR TOAST (replaced alert)
+          console.error(error)
+          toast.error("Failed to create order.") // [3] ERROR TOAST (replaced alert)
         }
       }
     }
@@ -66,7 +66,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     <Sheet open={open} onOpenChange={setOpen}>
       {/* ... rest of the JSX remains exactly the same ... */}
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-2 bg-slate-800">
+        <Button size="sm" className="gap-2">
           <Scissors className="h-4 w-4" /> New Order
         </Button>
       </SheetTrigger>
@@ -79,7 +79,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-6">
-          
+
           <div className="space-y-2">
             <Label htmlFor="fabric">Fabric / Style Description</Label>
             <Textarea id="fabric" name="fabric" placeholder="e.g. Ankara fabric, long gown..." required />
@@ -87,31 +87,31 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="color">Color</Label>
-                <Input id="color" name="color" placeholder="Blue/Gold" />
+              <Label htmlFor="color">Color</Label>
+              <Input id="color" name="color" placeholder="Blue/Gold" />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" name="quantity" type="number" defaultValue="1" min="1" required />
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input id="quantity" name="quantity" type="number" defaultValue="1" min="1" required />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-             <div className="space-y-2">
-                <Label htmlFor="amount">Total Amount (₦)</Label>
-                <Input id="amount" name="amount" type="number" placeholder="0.00" required />
-             </div>
-             <div className="space-y-2">
-                <Label htmlFor="delivery_date">Delivery Date</Label>
-                <Input id="delivery_date" name="delivery_date" type="date" required />
-             </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Total Amount (₦)</Label>
+              <Input id="amount" name="amount" type="number" placeholder="0.00" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delivery_date">Delivery Date</Label>
+              <Input id="delivery_date" name="delivery_date" type="date" required />
+            </div>
           </div>
 
           <div className="space-y-2">
-             <Label>Style References</Label>
-             <div className="border rounded-md p-4 bg-slate-50">
-                <ImageUploader onUploadComplete={(urls) => setImageUrls(urls)} />
-             </div>
+            <Label>Style References</Label>
+            <div className="border rounded-md p-4 bg-muted/50">
+              <ImageUploader onUploadComplete={(urls) => setImageUrls(urls)} />
+            </div>
           </div>
 
           <SheetFooter>

@@ -31,7 +31,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         const businessName = formData.get("businessName") as string
         const phone = formData.get("phone") as string
         const address = formData.get("address") as string
-        
+
         // [1] Capture new bank fields
         const bankName = formData.get("bankName") as string
         const accountName = formData.get("accountName") as string
@@ -67,9 +67,9 @@ export function SettingsForm({ tenant }: { tenant: any }) {
 
             <div className="space-y-2">
                 <Label>Business Logo</Label>
-                <div className="flex items-center gap-6 border p-4 rounded-lg bg-slate-50">
+                <div className="flex items-center gap-6 border p-4 rounded-lg bg-muted/50">
                     {logoUrl ? (
-                        <div className="relative h-20 w-20 border rounded-md bg-white overflow-hidden">
+                        <div className="relative h-20 w-20 border rounded-md bg-background overflow-hidden">
                             <Image src={logoUrl} alt="Logo" fill className="object-contain p-1" />
                             <button
                                 type="button"
@@ -80,7 +80,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                             </button>
                         </div>
                     ) : (
-                        <div className="h-20 w-20 border-2 border-dashed rounded-md flex items-center justify-center text-muted-foreground bg-white">
+                        <div className="h-20 w-20 border-2 border-dashed rounded-md flex items-center justify-center text-muted-foreground bg-background">
                             <Upload className="h-6 w-6" />
                         </div>
                     )}
@@ -131,35 +131,35 @@ export function SettingsForm({ tenant }: { tenant: any }) {
 
                 {/* [3] NEW: Payment Information Section */}
                 <div className="pt-4 border-t mt-2">
-                    <h3 className="font-semibold mb-4 text-sm text-slate-900">Payment Information</h3>
+                    <h3 className="font-semibold mb-4 text-sm text-foreground">Payment Information</h3>
                     <div className="grid gap-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="bankName">Bank Name</Label>
-                                <Input 
-                                    id="bankName" 
-                                    name="bankName" 
-                                    defaultValue={tenant?.bank_name} 
-                                    placeholder="e.g. GTBank" 
+                                <Input
+                                    id="bankName"
+                                    name="bankName"
+                                    defaultValue={tenant?.bank_name}
+                                    placeholder="e.g. GTBank"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="accountNumber">Account Number</Label>
-                                <Input 
-                                    id="accountNumber" 
-                                    name="accountNumber" 
-                                    defaultValue={tenant?.account_number} 
-                                    placeholder="0123456789" 
+                                <Input
+                                    id="accountNumber"
+                                    name="accountNumber"
+                                    defaultValue={tenant?.account_number}
+                                    placeholder="0123456789"
                                 />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="accountName">Account Name</Label>
-                            <Input 
-                                id="accountName" 
-                                name="accountName" 
-                                defaultValue={tenant?.account_name} 
-                                placeholder="Account Name" 
+                            <Input
+                                id="accountName"
+                                name="accountName"
+                                defaultValue={tenant?.account_name}
+                                placeholder="Account Name"
                             />
                         </div>
                     </div>

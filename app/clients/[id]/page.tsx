@@ -130,7 +130,7 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                                                 <Badge variant={order.status === 'ready' ? 'default' : 'outline'} className="capitalize">
                                                     {order.status}
                                                 </Badge>
-                                                
+
                                                 {/* ACTION BUTTONS */}
                                                 <EditOrderSheet order={order} />
                                                 <DeleteOrderButton orderId={order.id} /> {/* [2] BUTTON ADDED HERE */}
@@ -147,7 +147,7 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                                                         href={url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="relative h-48 w-48 shrink-0 rounded-xl overflow-hidden border shadow-sm snap-start hover:opacity-95 transition-all bg-slate-100"
+                                                        className="relative h-48 w-48 shrink-0 rounded-xl overflow-hidden border shadow-sm snap-start hover:opacity-95 transition-all bg-muted"
                                                     >
                                                         <Image
                                                             src={url}

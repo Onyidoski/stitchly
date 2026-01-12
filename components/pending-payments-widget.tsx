@@ -1,3 +1,4 @@
+// components/pending-payments-widget.tsx
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,19 +12,22 @@ export function PendingPaymentsWidget({ orders }: { orders: any[] }) {
     const topOrders = orders.slice(0, 4)
 
     return (
-        <Card className="md:col-span-1 lg:col-span-2 shadow-sm border-none bg-white">
+        // [FIX] Changed bg-white to bg-card
+        <Card className="md:col-span-1 lg:col-span-2 shadow-sm border-none bg-card">
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-                        <div className="h-5 w-5 rounded-full bg-red-100 flex items-center justify-center">
-                            <AlertCircle className="h-3 w-3 text-red-600" />
+                        {/* [FIX] Icon bg for dark mode */}
+                        <div className="h-5 w-5 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                            <AlertCircle className="h-3 w-3 text-red-600 dark:text-red-400" />
                         </div>
                     </div>
                     <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                 </div>
             </CardHeader>
             <CardContent>
+                {/* ... existing content ... */}
                 <div className="mb-4">
                     <div className="text-2xl font-bold text-foreground">₦{totalPending.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Total outstanding balance</p>
@@ -42,7 +46,7 @@ export function PendingPaymentsWidget({ orders }: { orders: any[] }) {
                                     <div className="h-2 w-2 rounded-full bg-red-500" />
                                     <span className="font-medium text-muted-foreground">{clientName.split(' ')[0]}</span>
                                 </div>
-                                <div className="font-bold text-red-600">
+                                <div className="font-bold text-red-600 dark:text-red-400">
                                     -₦{balance.toLocaleString()}
                                 </div>
                             </div>

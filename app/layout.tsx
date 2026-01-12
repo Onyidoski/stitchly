@@ -1,7 +1,10 @@
+// app/layout.tsx
+
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import { IosInstallPrompt } from "@/components/ios-install-prompt"; //
+import { IosInstallPrompt } from "@/components/ios-install-prompt";
+import { ThemeProvider } from "@/components/theme-provider"; // [!code ++]
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,13 +45,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // [!code ++] Add suppressHydrationWarning
+    <html lang="en" suppressHydrationWarning> 
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <IosInstallPrompt />
-        <Toaster position="top-center" richColors />
+        {/* [!code ++] Wrap children with ThemeProvider */}
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
+            {children}
+            <IosInstallPrompt />
+            <Toaster position="top-center" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

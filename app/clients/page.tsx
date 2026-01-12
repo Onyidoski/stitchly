@@ -47,7 +47,7 @@ export default async function ClientsPage() {
                     <AddClientSheet />
                 </div>
 
-                <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                <Card className="border-none shadow-sm rounded-xl overflow-hidden">
                     <CardContent className="p-0">
                         <ClientsTable clients={clients || []} />
                     </CardContent>

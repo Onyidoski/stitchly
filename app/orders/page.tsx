@@ -59,15 +59,15 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                 {/* FIX: Set defaultValue to the tab from URL */}
                 <Tabs defaultValue={currentTab} className="space-y-4">
                     {/* FIX: Added w-fit to prevent background stretching */}
-                    <TabsList className="bg-slate-100 p-1 rounded-xl w-fit flex-wrap h-auto justify-start">
-                        <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">Active ({activeOrders.length})</TabsTrigger>
-                        <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">Completed ({completedOrders.length})</TabsTrigger>
-                        <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">All ({allOrders.length})</TabsTrigger>
+                    <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap h-auto justify-start">
+                        <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none">Active ({activeOrders.length})</TabsTrigger>
+                        <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none">Completed ({completedOrders.length})</TabsTrigger>
+                        <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none">All ({allOrders.length})</TabsTrigger>
                     </TabsList>
 
                     {/* ACTIVE ORDERS TAB */}
                     <TabsContent value="active">
-                        <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                        <Card className="border-none shadow-sm rounded-xl overflow-hidden">
                             <CardContent className="p-0">
                                 <OrdersTable orders={activeOrders} />
                             </CardContent>
@@ -76,7 +76,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
                     {/* COMPLETED ORDERS TAB */}
                     <TabsContent value="completed">
-                        <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                        <Card className="border-none shadow-sm rounded-xl overflow-hidden">
                             <CardContent className="p-0">
                                 <OrdersTable orders={completedOrders} />
                             </CardContent>
@@ -85,7 +85,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
                     {/* ALL ORDERS TAB */}
                     <TabsContent value="all">
-                        <Card className="border-none shadow-sm bg-white rounded-xl overflow-hidden">
+                        <Card className="border-none shadow-sm rounded-xl overflow-hidden">
                             <CardContent className="p-0">
                                 <OrdersTable orders={allOrders} />
                             </CardContent>

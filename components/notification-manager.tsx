@@ -37,14 +37,14 @@ export function NotificationManager() {
 
   async function registerServiceWorker() {
     try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-            scope: '/',
-            updateViaCache: 'none',
-        })
-        const sub = await registration.pushManager.getSubscription()
-        setSubscription(sub)
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      })
+      const sub = await registration.pushManager.getSubscription()
+      setSubscription(sub)
     } catch (error) {
-        console.error("Service Worker registration failed:", error)
+      console.error("Service Worker registration failed:", error)
     }
   }
 
@@ -52,17 +52,17 @@ export function NotificationManager() {
     setLoading(true)
     try {
       const registration = await navigator.serviceWorker.ready
-      
+
       // REPLACE THIS WITH YOUR GENERATED PUBLIC VAPID KEY
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'YOUR_PUBLIC_KEY_HERE'
-      
+
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
       })
 
       setSubscription(sub)
-      
+
       // Save to Database
       await saveSubscriptionToDb(sub)
       toast.success("Notifications enabled!")
@@ -76,14 +76,14 @@ export function NotificationManager() {
   async function saveSubscriptionToDb(sub: PushSubscription) {
     const { endpoint, keys } = sub.toJSON()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user || !keys) return
 
     await supabase.from('push_subscriptions').upsert({
-        user_id: user.id,
-        endpoint: endpoint,
-        p256dh: keys.p256dh,
-        auth: keys.auth
+      user_id: user.id,
+      endpoint: endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth
     }, { onConflict: 'endpoint' })
   }
 
@@ -92,23 +92,23 @@ export function NotificationManager() {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg bg-white">
+    <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
       <div className="space-y-0.5">
         <h3 className="font-medium text-base">Order Reminders</h3>
         <p className="text-sm text-muted-foreground">
-            {subscription 
-                ? "You are receiving notifications for due orders." 
-                : "Get notified when orders are due."}
+          {subscription
+            ? "You are receiving notifications for due orders."
+            : "Get notified when orders are due."}
         </p>
       </div>
-      
-      <Button 
-        onClick={subscribeToPush} 
+
+      <Button
+        onClick={subscribeToPush}
         disabled={loading || !!subscription}
         variant={subscription ? "outline" : "default"}
       >
-        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
-         subscription ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> :
+          subscription ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />
         }
         {subscription ? "Enabled" : "Enable"}
       </Button>

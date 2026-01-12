@@ -21,9 +21,9 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    
+
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -53,7 +53,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           knee_length: formData.get("knee_length"),
           full_length: formData.get("full_length"),
           blouse_length: formData.get("blouse_length"),
-          
+
           // Sleeves
           sleeve_length_short: formData.get("sleeve_length_short"),
           round_sleeve_short: formData.get("round_sleeve_short"),
@@ -73,7 +73,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           ankle: formData.get("ankle"),
           trouser_length: formData.get("trouser_length"),
           pallazo_length: formData.get("pallazo_length"),
-          
+
           notes: formData.get("notes"),
         })
 
@@ -82,8 +82,8 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           setOpen(false)
           router.refresh()
         } else {
-            console.error(error)
-            toast.error("Failed to add measurements")
+          console.error(error)
+          toast.error("Failed to add measurements")
         }
       }
     }
@@ -93,7 +93,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
-      <Input id={id} name={id} type="number" step="0.1" className="h-9 bg-slate-50 border-slate-200" />
+      <Input id={id} name={id} type="number" step="0.1" className="h-9 bg-muted/50 border-input" />
     </div>
   )
 
@@ -107,8 +107,8 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
       {/* FIX 1: h-[100dvh] forces the sheet to respect the mobile browser height strictly.
          p-0 removes default padding that messes up full-width layouts.
       */}
-      <SheetContent className="w-full sm:max-w-[600px] h-[100dvh] p-0 flex flex-col bg-white">
-        
+      <SheetContent className="w-full sm:max-w-[600px] h-[100dvh] p-0 flex flex-col bg-background">
+
         {/* HEADER: Fixed at top */}
         <SheetHeader className="px-6 py-4 border-b flex-none">
           <SheetTitle>New Measurements</SheetTitle>
@@ -116,86 +116,86 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
             Enter comprehensive measurement details.
           </SheetDescription>
         </SheetHeader>
-        
+
         {/* FORM: Takes all remaining space */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          
+
           {/* FIX 2: NATIVE SCROLLING
              Replaced <ScrollArea> with a simple div using 'overflow-y-auto'.
              This is 100% reliable on mobile phones.
           */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-8 pb-4">
-                
-                {/* 1. BODY MEASUREMENTS */}
-                <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Body / Top</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <Field id="round_shoulder" label="Round Shoulder" />
-                        <Field id="round_armhole" label="Round Armhole" />
-                        <Field id="round_upper_bust" label="Round Upper Bust" />
-                        <Field id="shoulder" label="Shoulder" />
-                        <Field id="bust_span" label="Bust Span" />
-                        <Field id="bust" label="Bust" />
-                        <Field id="bust_point" label="Bust Point" />
-                        <Field id="underbust" label="Underbust" />
-                        <Field id="underbust_point" label="Underbust Point" />
-                        <Field id="waist" label="Waist" />
-                        <Field id="waist_point" label="Waist Point" />
-                        <Field id="hip" label="Hips" />
-                        <Field id="hip_point" label="Hip Point" />
-                        <Field id="back_length" label="Back Length" />
-                        <Field id="knee_length" label="Knee Length" />
-                        <Field id="blouse_length" label="Blouse Length" />
-                        <Field id="full_length" label="Full Length" />
-                    </div>
+
+              {/* 1. BODY MEASUREMENTS */}
+              <div>
+                <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-background z-10 w-full">Body / Top</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field id="round_shoulder" label="Round Shoulder" />
+                  <Field id="round_armhole" label="Round Armhole" />
+                  <Field id="round_upper_bust" label="Round Upper Bust" />
+                  <Field id="shoulder" label="Shoulder" />
+                  <Field id="bust_span" label="Bust Span" />
+                  <Field id="bust" label="Bust" />
+                  <Field id="bust_point" label="Bust Point" />
+                  <Field id="underbust" label="Underbust" />
+                  <Field id="underbust_point" label="Underbust Point" />
+                  <Field id="waist" label="Waist" />
+                  <Field id="waist_point" label="Waist Point" />
+                  <Field id="hip" label="Hips" />
+                  <Field id="hip_point" label="Hip Point" />
+                  <Field id="back_length" label="Back Length" />
+                  <Field id="knee_length" label="Knee Length" />
+                  <Field id="blouse_length" label="Blouse Length" />
+                  <Field id="full_length" label="Full Length" />
                 </div>
+              </div>
 
-                {/* 2. SLEEVE MEASUREMENTS */}
-                <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Sleeves</h4>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
-                        <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
+              {/* 2. SLEEVE MEASUREMENTS */}
+              <div>
+                <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-background z-10 w-full">Sleeves</h4>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
+                  <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
 
-                        <Field id="sleeve_length_short" label="Short Sleeve Length" />
-                        <Field id="round_sleeve_short" label="Round Short Sleeve" />
+                  <Field id="sleeve_length_short" label="Short Sleeve Length" />
+                  <Field id="round_sleeve_short" label="Round Short Sleeve" />
 
-                        <Field id="sleeve_length_elbow" label="Elbow Sleeve Length" />
-                        <Field id="round_sleeve_elbow" label="Round Elbow Sleeve" />
+                  <Field id="sleeve_length_elbow" label="Elbow Sleeve Length" />
+                  <Field id="round_sleeve_elbow" label="Round Elbow Sleeve" />
 
-                        <Field id="sleeve_length_3_4" label="3/4 Sleeve Length" />
-                        <Field id="round_sleeve_3_4" label="Round 3/4 Sleeve" />
+                  <Field id="sleeve_length_3_4" label="3/4 Sleeve Length" />
+                  <Field id="round_sleeve_3_4" label="Round 3/4 Sleeve" />
 
-                        <Field id="sleeve_length_full" label="Full Sleeve Length" />
-                        <Field id="round_sleeve_full" label="Round Full Sleeve" />
-                    </div>
+                  <Field id="sleeve_length_full" label="Full Sleeve Length" />
+                  <Field id="round_sleeve_full" label="Round Full Sleeve" />
                 </div>
+              </div>
 
-                {/* 3. TROUSER MEASUREMENTS */}
-                <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Trouser / Bottom</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <Field id="trouser_waist" label="Trouser Waist" />
-                        <Field id="trouser_hips" label="Trouser Hips" />
-                        <Field id="trouser_hip_point" label="Hip Point (Waist-Hip)" />
-                        <Field id="thigh" label="Laps / Thigh" />
-                        <Field id="round_knee" label="Round Knee" />
-                        <Field id="ankle" label="Ankle / Foot" />
-                        <Field id="trouser_length" label="Trouser Length" />
-                        <Field id="pallazo_length" label="Pallazo Length" />
-                    </div>
+              {/* 3. TROUSER MEASUREMENTS */}
+              <div>
+                <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-background z-10 w-full">Trouser / Bottom</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field id="trouser_waist" label="Trouser Waist" />
+                  <Field id="trouser_hips" label="Trouser Hips" />
+                  <Field id="trouser_hip_point" label="Hip Point (Waist-Hip)" />
+                  <Field id="thigh" label="Laps / Thigh" />
+                  <Field id="round_knee" label="Round Knee" />
+                  <Field id="ankle" label="Ankle / Foot" />
+                  <Field id="trouser_length" label="Trouser Length" />
+                  <Field id="pallazo_length" label="Pallazo Length" />
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="notes">Additional Notes</Label>
-                    <Input id="notes" name="notes" placeholder="Any specific requirements..." />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Additional Notes</Label>
+                <Input id="notes" name="notes" placeholder="Any specific requirements..." />
+              </div>
             </div>
           </div>
 
           {/* FOOTER: Fixed at bottom */}
-          <SheetFooter className="px-6 py-4 border-t flex-none bg-white">
+          <SheetFooter className="px-6 py-4 border-t flex-none bg-background">
             <Button type="submit" disabled={loading} className="w-full">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Measurements

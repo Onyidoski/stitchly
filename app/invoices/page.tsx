@@ -62,9 +62,9 @@ export default async function InvoicesPage({
                     <Search placeholder="Search by client or ID..." />
                 </div>
 
-                <Card className="border-none shadow-sm bg-white overflow-hidden">
+                <Card className="border-none shadow-sm rounded-xl overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-slate-50">
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
                                 {/* Hide Invoice # on very small screens */}
                                 <TableHead className="w-[80px] hidden xs:table-cell">Invoice #</TableHead>
@@ -92,8 +92,8 @@ export default async function InvoicesPage({
                                         </TableCell>
                                         <TableCell className="font-medium">
                                             {/* FIX: Link to Client Profile */}
-                                            <Link 
-                                                href={`/clients/${order.client_id}`} 
+                                            <Link
+                                                href={`/clients/${order.client_id}`}
                                                 className="hover:underline hover:text-primary transition-colors"
                                             >
                                                 {/* @ts-ignore */}
@@ -112,12 +112,11 @@ export default async function InvoicesPage({
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Badge variant="outline" 
-                                                className={`scale-90 sm:scale-100 whitespace-nowrap ${
-                                                    order.payment_status === 'paid' 
-                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
-                                                    : "bg-orange-50 text-orange-700 border-orange-200"
-                                                }`}>
+                                            <Badge variant="outline"
+                                                className={`scale-90 sm:scale-100 whitespace-nowrap ${order.payment_status === 'paid'
+                                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-800"
+                                                        : "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-400 dark:border-orange-800"
+                                                    }`}>
                                                 {order.payment_status}
                                             </Badge>
                                         </TableCell>

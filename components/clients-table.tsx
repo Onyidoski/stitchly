@@ -37,8 +37,8 @@ export function ClientsTable({ clients }: ClientsTableProps) {
 
     if (clients.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-xl border border-dashed">
-                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-card rounded-xl border border-dashed">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
                     <Search className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold">No clients found</h3>
@@ -59,7 +59,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                     <Input
                         type="search"
                         placeholder="Search by name, email, or phone..."
-                        className="pl-9 h-9 bg-slate-50 border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary w-full"
+                        className="pl-9 h-9 bg-muted/50 border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -73,7 +73,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
             <div className="hidden md:block rounded-md border overflow-hidden max-w-[calc(100vw-2rem)] md:max-w-full">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[800px]">
-                        <TableHeader className="bg-slate-50">
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead className="pl-6 w-[300px]">Client Name</TableHead>
                                 <TableHead>Contact Info</TableHead>
@@ -86,7 +86,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                             {filteredClients.map((client) => (
                                 <TableRow
                                     key={client.id}
-                                    className="cursor-pointer hover:bg-slate-50/80 transition-colors border-0"
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors border-0"
                                     onClick={() => router.push(`/clients/${client.id}`)}
                                 >
                                     <TableCell className="pl-6 font-medium">
@@ -108,7 +108,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
-                                        <span className="capitalize px-2 py-1 rounded-full bg-slate-100 text-xs text-slate-600 font-medium">
+                                        <span className="capitalize px-2 py-1 rounded-full bg-muted text-xs text-muted-foreground font-medium">
                                             {client.gender || 'Unspecified'}
                                         </span>
                                     </TableCell>
@@ -146,11 +146,11 @@ export function ClientsTable({ clients }: ClientsTableProps) {
             {/* --- MOBILE VIEW (Stacked List) --- */}
             <div className="md:hidden">
                 {filteredClients.length > 0 ? (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-border">
                         {filteredClients.map((client) => (
                             <div
                                 key={client.id}
-                                className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors"
+                                className="p-4 flex flex-col gap-3 hover:bg-muted/50 transition-colors"
                                 onClick={() => router.push(`/clients/${client.id}`)}
                             >
                                 {/* Header Row */}
@@ -191,11 +191,11 @@ export function ClientsTable({ clients }: ClientsTableProps) {
 
                                 {/* Footer Row */}
                                 <div className="flex items-center justify-between pt-1">
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                                         {client.phone || 'N/A'}
                                     </div>
-                                    <span className="capitalize px-2 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-600 font-medium">
+                                    <span className="capitalize px-2 py-0.5 rounded-full bg-muted text-[10px] text-muted-foreground font-medium">
                                         {client.gender || 'Unspecified'}
                                     </span>
                                 </div>
