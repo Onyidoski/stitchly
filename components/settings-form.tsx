@@ -20,7 +20,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         e.preventDefault()
         setLoading(true)
 
-        // FIX: Add safety check for missing tenant
+        // Safety check to ensure we have a tenant ID to update
         if (!tenant || !tenant.id) {
             toast.error("Error: No business profile found. Please try refreshing the page.")
             setLoading(false)
@@ -31,6 +31,11 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         const businessName = formData.get("businessName") as string
         const phone = formData.get("phone") as string
         const address = formData.get("address") as string
+        
+        // [1] Capture new bank fields
+        const bankName = formData.get("bankName") as string
+        const accountName = formData.get("accountName") as string
+        const accountNumber = formData.get("accountNumber") as string
 
         const { error } = await supabase
             .from('tenants')
@@ -38,7 +43,11 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                 business_name: businessName,
                 phone: phone,
                 address: address,
-                logo_url: logoUrl
+                logo_url: logoUrl,
+                // [2] Update database with payment info
+                bank_name: bankName,
+                account_name: accountName,
+                account_number: accountNumber
             })
             .eq('id', tenant.id)
 
@@ -98,29 +107,66 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                     />
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                        id="phone"
-                        name="phone"
-                        defaultValue={tenant?.phone}
-                        placeholder="+234 800 000 0000"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                            id="phone"
+                            name="phone"
+                            defaultValue={tenant?.phone}
+                            placeholder="+234 800 000 0000"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="address">Business Address</Label>
+                        <Textarea
+                            id="address"
+                            name="address"
+                            defaultValue={tenant?.address}
+                            placeholder="123 Fashion Street, Lagos..."
+                            rows={3}
+                        />
+                    </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="address">Business Address</Label>
-                    <Textarea
-                        id="address"
-                        name="address"
-                        defaultValue={tenant?.address}
-                        placeholder="123 Fashion Street, Lagos..."
-                        rows={3}
-                    />
+                {/* [3] NEW: Payment Information Section */}
+                <div className="pt-4 border-t mt-2">
+                    <h3 className="font-semibold mb-4 text-sm text-slate-900">Payment Information</h3>
+                    <div className="grid gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="bankName">Bank Name</Label>
+                                <Input 
+                                    id="bankName" 
+                                    name="bankName" 
+                                    defaultValue={tenant?.bank_name} 
+                                    placeholder="e.g. GTBank" 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="accountNumber">Account Number</Label>
+                                <Input 
+                                    id="accountNumber" 
+                                    name="accountNumber" 
+                                    defaultValue={tenant?.account_number} 
+                                    placeholder="0123456789" 
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="accountName">Account Name</Label>
+                            <Input 
+                                id="accountName" 
+                                name="accountName" 
+                                defaultValue={tenant?.account_name} 
+                                placeholder="Account Name" 
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full md:w-auto">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
             </Button>
