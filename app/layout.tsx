@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { IosInstallPrompt } from "@/components/ios-install-prompt"; //
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Stitchly",
   description: "Fashion Design Management App",
-  manifest: "/manifest.json", // [1] Links to the PWA manifest
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
-    apple: "/icon-192x192.png", // [2] Defines icon for iPhone Home Screen
+    apple: "/icon-192x192.png",
   },
 };
 
@@ -46,6 +47,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <IosInstallPrompt />
         <Toaster position="top-center" richColors />
       </body>
     </html>

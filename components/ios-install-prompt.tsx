@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { X, Share, PlusSquare } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 export function IosInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
@@ -39,9 +38,9 @@ export function IosInstallPrompt() {
         
         <div className="flex justify-between items-start mb-3">
             <div>
-                <h3 className="font-semibold text-slate-900 text-sm">Install App for Notifications</h3>
+                <h3 className="font-semibold text-slate-900 text-sm">Install Stitchly</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    To receive delivery alerts and updates, you must add this app to your home screen.
+                    For the best experience, we recommend adding Stitchly to your home screen. This gives you faster access and a full-screen view.
                 </p>
             </div>
             <button onClick={handleDismiss} className="text-slate-400 hover:text-slate-600 p-1">
