@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from "sonner" // [!code ++]
 
 export default function LoginPage() {
     const [isSignUp, setIsSignUp] = useState(false)
@@ -42,6 +43,8 @@ export default function LoginPage() {
                 })
                 if (signUpError) throw signUpError
                 setError('Check your email for the confirmation link!')
+                // Optional: Toast for sign up success
+                toast.success('Sign up successful! Please check your email.')
             } else {
                 // LOGIN LOGIC
                 const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -49,10 +52,15 @@ export default function LoginPage() {
                     password,
                 })
                 if (signInError) throw signInError
+                
+                // [!code ++] Add success toast here
+                toast.success("Sign in successfully")
+                
                 router.push('/') // Redirect to dashboard
             }
         } catch (err: any) {
             setError(err.message)
+            toast.error(err.message)
         } finally {
             setLoading(false)
         }
