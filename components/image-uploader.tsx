@@ -45,7 +45,6 @@ export function ImageUploader({ onUploadComplete }: ImageUploaderProps) {
         
         const { uploadUrl, publicUrl } = await res.json()
 
-        // 3. Upload directly to R2
         await fetch(uploadUrl, {
           method: 'PUT',
           body: compressedFile,

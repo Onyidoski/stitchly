@@ -15,10 +15,19 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Stitchly",
-  description: "Fashion Designer Client & Order Management System",
+  description: "Fashion Design Management App",
+  manifest: "/manifest.json", // [1] Links to the PWA manifest
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Stitchly",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-192x192.png", // [2] Defines icon for iPhone Home Screen
+  },
 };
 
-// ADDED VIEWPORT EXPORT
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
