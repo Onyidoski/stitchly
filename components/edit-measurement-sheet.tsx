@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Edit2, Loader2, Trash2 } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner" 
 
-// [FIX] Component defined OUTSIDE to prevent re-mounting on state changes
+// [FIX] Updated styling to match the "Add" sheet (h-9 for better touch targets)
 const MeasurementField = ({ id, label, measurement }: { id: string, label: string, measurement: any }) => (
   <div className="space-y-2">
     <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
@@ -31,7 +30,7 @@ const MeasurementField = ({ id, label, measurement }: { id: string, label: strin
       name={id} 
       type="number" 
       step="0.1" 
-      className="h-8" 
+      className="h-9 bg-slate-50 border-slate-200" 
       defaultValue={measurement[id] || ''} 
     />
   </div>
@@ -112,19 +111,26 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
         </Button>
       </SheetTrigger>
       
-      <SheetContent className="sm:max-w-[600px] sm:px-0">
-        <SheetHeader className="px-6">
+      {/* FIX 1: Use h-[100dvh] for full mobile height and remove default padding */}
+      <SheetContent className="w-full sm:max-w-[600px] h-[100dvh] p-0 flex flex-col bg-white">
+        
+        {/* HEADER: Fixed at top */}
+        <SheetHeader className="px-6 py-4 border-b flex-none">
           <SheetTitle>Edit Measurements</SheetTitle>
           <SheetDescription>Update or delete this record.</SheetDescription>
         </SheetHeader>
         
-        <form onSubmit={handleUpdate} className="flex flex-col h-full pb-20">
-          <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)]">
-            <div className="space-y-8">
+        {/* FORM: Flex container that fills remaining space */}
+        <form onSubmit={handleUpdate} className="flex flex-col flex-1 overflow-hidden">
+          
+          {/* FIX 2: Native scrolling div instead of ScrollArea */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-8 pb-4">
                 
                 {/* 1. BODY MEASUREMENTS */}
                 <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1">Body / Top</h4>
+                    {/* FIX 3: Sticky Header */}
+                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Body / Top</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <MeasurementField id="round_shoulder" label="Round Shoulder" measurement={measurement} />
                         <MeasurementField id="round_armhole" label="Round Armhole" measurement={measurement} />
@@ -148,7 +154,8 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
 
                 {/* 2. SLEEVES */}
                 <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1">Sleeves</h4>
+                     {/* FIX 3: Sticky Header */}
+                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Sleeves</h4>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Length</div>
                         <div className="text-xs font-semibold text-muted-foreground mb-[-10px]">Round</div>
@@ -166,7 +173,8 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
 
                 {/* 3. TROUSERS */}
                 <div>
-                    <h4 className="font-medium text-primary mb-4 border-b pb-1">Trouser / Bottom</h4>
+                     {/* FIX 3: Sticky Header */}
+                    <h4 className="font-medium text-primary mb-4 border-b pb-1 sticky top-0 bg-white z-10">Trouser / Bottom</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <MeasurementField id="trouser_waist" label="Trouser Waist" measurement={measurement} />
                         <MeasurementField id="trouser_hips" label="Trouser Hips" measurement={measurement} />
@@ -181,12 +189,13 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
 
                 <div className="space-y-2">
                     <Label htmlFor="notes">Additional Notes</Label>
-                    <Input id="notes" name="notes" defaultValue={measurement.notes || ''} />
+                    <Input id="notes" name="notes" defaultValue={measurement.notes || ''} className="bg-slate-50 border-slate-200" />
                 </div>
             </div>
-          </ScrollArea>
+          </div>
 
-          <SheetFooter className="px-6 pt-4 pb-10 border-t flex flex-row justify-between gap-4">
+          {/* FOOTER: Fixed at bottom */}
+          <SheetFooter className="px-6 py-4 border-t flex-none bg-white flex flex-row justify-between gap-4">
             
             {/* DELETE BUTTON (Left) */}
             <AlertDialog>
