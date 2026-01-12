@@ -20,8 +20,9 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         e.preventDefault()
         setLoading(true)
 
+        // Safety check to ensure we have a tenant ID to update
         if (!tenant || !tenant.id) {
-            toast.error("Error: No business profile found.")
+            toast.error("Error: No business profile found. Please try refreshing the page.")
             setLoading(false)
             return
         }
@@ -43,7 +44,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                 phone: phone,
                 address: address,
                 logo_url: logoUrl,
-                // [2] Update database
+                // [2] Update database with payment info
                 bank_name: bankName,
                 account_name: accountName,
                 account_number: accountNumber
@@ -63,8 +64,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* ... (Logo section remains the same) ... */}
-            
+
             <div className="space-y-2">
                 <Label>Business Logo</Label>
                 <div className="flex items-center gap-6 border p-4 rounded-lg bg-slate-50">
@@ -99,20 +99,36 @@ export function SettingsForm({ tenant }: { tenant: any }) {
             <div className="grid gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="businessName">Business Name</Label>
-                    <Input id="businessName" name="businessName" defaultValue={tenant?.business_name} required />
+                    <Input
+                        id="businessName"
+                        name="businessName"
+                        defaultValue={tenant?.business_name}
+                        required
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" name="phone" defaultValue={tenant?.phone} placeholder="+234..." />
+                        <Input
+                            id="phone"
+                            name="phone"
+                            defaultValue={tenant?.phone}
+                            placeholder="+234 800 000 0000"
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="address">Business Address</Label>
-                        <Input id="address" name="address" defaultValue={tenant?.address} placeholder="Lagos, Nigeria" />
+                        <Textarea
+                            id="address"
+                            name="address"
+                            defaultValue={tenant?.address}
+                            placeholder="123 Fashion Street, Lagos..."
+                            rows={3}
+                        />
                     </div>
                 </div>
-                
+
                 {/* [3] NEW: Payment Information Section */}
                 <div className="pt-4 border-t mt-2">
                     <h3 className="font-semibold mb-4 text-sm text-slate-900">Payment Information</h3>
@@ -120,16 +136,31 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="bankName">Bank Name</Label>
-                                <Input id="bankName" name="bankName" defaultValue={tenant?.bank_name} placeholder="e.g. GTBank" />
+                                <Input 
+                                    id="bankName" 
+                                    name="bankName" 
+                                    defaultValue={tenant?.bank_name} 
+                                    placeholder="e.g. GTBank" 
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="accountNumber">Account Number</Label>
-                                <Input id="accountNumber" name="accountNumber" defaultValue={tenant?.account_number} placeholder="0123456789" />
+                                <Input 
+                                    id="accountNumber" 
+                                    name="accountNumber" 
+                                    defaultValue={tenant?.account_number} 
+                                    placeholder="0123456789" 
+                                />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="accountName">Account Name</Label>
-                            <Input id="accountName" name="accountName" defaultValue={tenant?.account_name} placeholder="Account Name" />
+                            <Input 
+                                id="accountName" 
+                                name="accountName" 
+                                defaultValue={tenant?.account_name} 
+                                placeholder="Account Name" 
+                            />
                         </div>
                     </div>
                 </div>
@@ -137,7 +168,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
 
             <Button type="submit" disabled={loading} className="w-full md:w-auto">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Settings
+                Save Changes
             </Button>
         </form>
     )
