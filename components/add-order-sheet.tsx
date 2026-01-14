@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react" // [!code change] Import useEffect
+import { useState, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(false)
   const [imageUrls, setImageUrls] = useState<string[]>([])
   
+  // AI States
   const [aiLoading, setAiLoading] = useState(false)
   const [estimate, setEstimate] = useState<{
     fabric_yards: string;
@@ -26,26 +27,28 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
   } | null>(null)
   const [description, setDescription] = useState("") 
   
-  // [!code ++] State to hold fetched measurements
+  // Measurement State
   const [clientMeasurements, setClientMeasurements] = useState<any>(null)
 
   const router = useRouter()
   const supabase = createClient()
 
-  // [!code ++] Fetch measurements when the sheet opens
+  // Fetch measurements when the sheet opens
   useEffect(() => {
     async function fetchMeasurements() {
       if (open && clientId) {
         const { data, error } = await supabase
-          .from('measurements')
+          .from('measurements') // Ensure this matches your actual table name
           .select('*')
           .eq('client_id', clientId)
-          .order('created_at', { ascending: false }) // Get the most recent
+          .order('created_at', { ascending: false })
           .limit(1)
           .single()
 
         if (data) {
           setClientMeasurements(data)
+        } else {
+            setClientMeasurements(null)
         }
       }
     }
@@ -62,12 +65,11 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     setEstimate(null)
 
     try {
-      const res = await fetch('/api/estimate', { // [!code warning] Ensure path matches your file structure, previously it was /api/ai/estimate in your snippet but the file provided is /api/estimate/route.ts
+      const res = await fetch('/api/estimate', {
         method: 'POST',
-        // [!code change] Send measurements along with description
         body: JSON.stringify({ 
-          description,
-          measurements: clientMeasurements 
+            description,
+            measurements: clientMeasurements 
         })
       })
       
@@ -75,7 +77,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
       
       if (data.result) {
         setEstimate(data.result)
-        toast.success("Estimate generated based on measurements!")
+        toast.success("Estimate generated!")
       } else {
         toast.error("Could not generate estimate")
       }
@@ -86,8 +88,6 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     }
   }
 
-  // ... rest of the handleSubmit and render logic remains the same ...
-  // (Include the rest of the existing file code here)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
@@ -171,11 +171,17 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
             />
-            {/* [!code ++] Visual feedback that measurements are being used */}
-            {clientMeasurements && (
-               <p className="text-[10px] text-muted-foreground text-right">
-                 * Using client measurements (Bust: {clientMeasurements.chest}, Hip: {clientMeasurements.hip})
-               </p>
+
+            {/* Measurement Feedback Logic */}
+            {clientMeasurements ? (
+                <p className="text-[10px] text-emerald-600 text-right animate-in fade-in">
+                    ✓ Using client measurements (Bust: {clientMeasurements.chest || '-'}, Hip: {clientMeasurements.hip || '-'})
+                </p>
+            ) : (
+                <p className="text-[10px] text-amber-600 text-right animate-in fade-in flex justify-end items-center gap-1 flex-wrap">
+                    <span>⚠️ No measurements found. Using standard sizing.</span>
+                    <span className="italic opacity-80">(Input client measurement for precise estimate)</span>
+                </p>
             )}
 
             {estimate && (
