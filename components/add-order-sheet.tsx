@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Scissors, Loader2, Sparkles, ArrowRight } from "lucide-react" // [!code ++] Added icons
+import { Scissors, Loader2, Sparkles, ArrowRight } from "lucide-react"
 import { ImageUploader } from "@/components/image-uploader"
 import { toast } from "sonner"
 
@@ -17,7 +17,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(false)
   const [imageUrls, setImageUrls] = useState<string[]>([])
   
-  // [!code ++] New AI States
+  // AI States
   const [aiLoading, setAiLoading] = useState(false)
   const [estimate, setEstimate] = useState<{
     fabric_yards: string;
@@ -30,7 +30,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
   const router = useRouter()
   const supabase = createClient()
 
-  // [!code ++] New AI Handler
+  // AI Handler
   const handleAiEstimate = async () => {
     if (!description || description.length < 5) {
       toast.error("Please enter a style description first")
@@ -41,7 +41,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     setEstimate(null) // Reset previous estimate
 
     try {
-      const res = await fetch('/api/ai/estimate', {
+      const res = await fetch('/api/estimate', {
         method: 'POST',
         body: JSON.stringify({ description })
       })
@@ -66,7 +66,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    // ... existing logic ...
+    
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
@@ -125,14 +125,14 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
                 <Label htmlFor="fabric">Fabric / Style Description</Label>
-                {/* [!code ++] AI Button */}
+                {/* AI Button - Dark Mode Fixed */}
                 <Button 
                     type="button" 
                     variant="ghost" 
                     size="sm" 
                     onClick={handleAiEstimate}
                     disabled={aiLoading}
-                    className="h-6 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                    className="h-6 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/50"
                 >
                     {aiLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
                     {aiLoading ? 'Analyzing...' : 'AI Estimate'}
@@ -147,16 +147,16 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
                 onChange={(e) => setDescription(e.target.value)}
             />
 
-            {/* [!code ++] Estimate Result Card */}
+            {/* Estimate Result Card - Dark Mode Fixed */}
             {estimate && (
-                <div className="rounded-md bg-indigo-50 p-3 border border-indigo-100 text-sm animate-in slide-in-from-top-2">
+                <div className="rounded-md bg-indigo-50 dark:bg-indigo-950/30 p-3 border border-indigo-100 dark:border-indigo-800 text-sm animate-in slide-in-from-top-2">
                     <div className="flex justify-between items-start mb-2">
-                        <span className="font-semibold text-indigo-900">AI Suggestion:</span>
+                        <span className="font-semibold text-indigo-900 dark:text-indigo-100">AI Suggestion:</span>
                         <Button 
                             type="button" 
                             variant="ghost" 
                             size="sm" 
-                            className="h-5 px-2 text-[10px] text-indigo-700 bg-white border border-indigo-200 hover:bg-white"
+                            className="h-5 px-2 text-[10px] text-indigo-700 dark:text-indigo-300 bg-white dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 hover:bg-white dark:hover:bg-indigo-900"
                             onClick={() => {
                                 const input = document.getElementById('amount') as HTMLInputElement
                                 if(input) input.value = estimate.price_max.toString()
@@ -166,16 +166,15 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
                             Apply Price <ArrowRight className="w-3 h-3 ml-1" />
                         </Button>
                     </div>
-                    <div className="space-y-1 text-indigo-800">
+                    <div className="space-y-1 text-indigo-800 dark:text-indigo-200">
                         <p>📏 <span className="font-medium">Fabric:</span> {estimate.fabric_yards}</p>
                         <p>💰 <span className="font-medium">Price:</span> ₦{estimate.price_min.toLocaleString()} - ₦{estimate.price_max.toLocaleString()}</p>
-                        <p className="text-xs text-indigo-600 mt-1 italic">"{estimate.reasoning}"</p>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1 italic">"{estimate.reasoning}"</p>
                     </div>
                 </div>
             )}
           </div>
 
-          {/* Rest of the form inputs... */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="color">Color</Label>
