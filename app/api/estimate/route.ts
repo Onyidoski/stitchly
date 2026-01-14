@@ -5,37 +5,42 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
-    const { description } = await req.json()
+    // [!code change] Destructure measurements from the request body
+    const { description, measurements } = await req.json()
 
     if (!description) {
       return NextResponse.json({ error: 'Description is required' }, { status: 400 })
     }
 
+    // Format measurements for the prompt (handle case where measurements might be missing)
+    const measurementContext = measurements 
+      ? `Client Measurements (in inches): 
+         - Chest/Bust: ${measurements.chest || 'N/A'}
+         - Waist: ${measurements.waist || 'N/A'}
+         - Hips: ${measurements.hip || 'N/A'}
+         - Shoulder: ${measurements.shoulder || 'N/A'}
+         - Sleeve: ${measurements.sleeve || 'N/A'}
+         - Length: ${measurements.length || 'N/A'}`
+      : 'No specific client measurements provided. Use standard adult sizing.'
+
+    // We use 'gemini-1.5-flash' because it is free and fast
     const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
-      temperature: 0, // Keep this 0 for consistent pricing
+      model: google('gemini-2.5-flash'), 
       schema: z.object({
         fabric_yards: z.string().describe('The estimated fabric needed, e.g., "4-5 yards"'),
         price_min: z.number().describe('Minimum recommended price in Naira (₦)'),
         price_max: z.number().describe('Maximum recommended price in Naira (₦)'),
-        // [!code ++] Updated description to force an answer every time
-        reasoning: z.string().describe('A brief explanation of how the fabric yardage and price were calculated.'),
+        reasoning: z.string().describe('Short explanation calculating usage based on the specific body measurements provided'),
       }),
-      system: `You are an expert Nigerian fashion designer and tailor (Stitchly AI). 
+      // [!code change] Updated system prompt to emphasize measurements
+      system: `You are an expert Nigerian fashion designer and tailor. 
+      Analyze the style description and the client's specific body measurements provided.
       
-      YOUR TASK:
-      Analyze the user's style description to estimate fabric usage and labor cost.
-
-      RULES FOR ESTIMATION:
-      1. FABRIC: If the style is vague (e.g., just "Ankara"), assume a standard adult outfit (e.g., Skirt & Blouse) and base estimates on that.
-      2. PRICING: Provide a realistic labor cost range in Nigerian Naira (₦) for a professional tailor in Lagos.
-      3. CONSISTENCY: Always give the same estimate for the same description.
-
-      OUTPUT GUIDELINES:
-      - 'fabric_yards': specific range (e.g. "5-6 yards").
-      - 'reasoning': REQUIRED. Always explain why you chose this yardage and price. 
-         (Example: "Off-shoulder styles require less fabric for the bodice but full sleeves consume more yardage.")`,
-      prompt: description,
+      1. Estimate the yards of fabric needed. CRITICAL: Adjust the yardage based on the provided body measurements (e.g., larger bust/hips require more fabric).
+      2. Suggest a fair price range in Nigerian Naira (₦) for sewing/labor (excluding fabric cost).
+      3. Be realistic with current market rates in Lagos/Abuja.`,
+      // [!code change] Pass both description and measurements in the prompt
+      prompt: `Style Description: ${description}\n\n${measurementContext}`,
     })
 
     return NextResponse.json({ result: object })
