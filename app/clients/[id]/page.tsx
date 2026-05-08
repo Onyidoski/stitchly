@@ -5,6 +5,7 @@ import { AddOrderSheet } from '@/components/add-order-sheet'
 import { EditOrderSheet } from '@/components/edit-order-sheet'
 import { EditMeasurementSheet } from '@/components/edit-measurement-sheet'
 import { DeleteOrderButton } from '@/components/delete-order-button' // [1] IMPORT ADDED
+import { ExpenseManager } from '@/components/expense-manager'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -182,6 +183,9 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* EXPENSE TRACKER */}
+                                        <ExpenseManager orderId={order.id} orderTotal={order.total_amount || 0} />
                                     </CardContent>
                                 </Card>
                             ))

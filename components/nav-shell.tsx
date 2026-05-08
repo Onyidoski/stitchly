@@ -24,22 +24,22 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClient } from "@/utils/supabase/client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, forwardRef } from "react"
 
-function UserProfileButton({
-  businessName,
-  userEmail,
-  interactive,
-}: {
-  businessName: string
-  userEmail: string
-  interactive: boolean
-}) {
-  const sharedClasses =
-    "w-full h-12 p-2 flex items-center justify-start gap-3 rounded-xl transition-all group"
-
-  const content = (
-    <>
+const UserProfileButton = forwardRef<
+  HTMLButtonElement,
+  {
+    businessName: string
+    userEmail: string
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ businessName, userEmail, ...props }, ref) => {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className="w-full h-12 p-2 flex items-center justify-start gap-3 rounded-xl transition-all group cursor-pointer hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      {...props}
+    >
       <Avatar className="h-8 w-8 border border-border shadow-sm">
         <AvatarImage src="" />
         <AvatarFallback className="bg-primary text-primary-foreground font-medium text-xs">
@@ -55,22 +55,10 @@ function UserProfileButton({
         </span>
       </div>
       <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-sidebar-foreground transition-colors" />
-    </>
+    </button>
   )
-
-  if (!interactive) {
-    return <div className={sharedClasses}>{content}</div>
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      className={`${sharedClasses} hover:bg-sidebar-accent hover:text-sidebar-accent-foreground`}
-    >
-      {content}
-    </Button>
-  )
-}
+})
+UserProfileButton.displayName = "UserProfileButton"
 
 function UserProfileSection({
   businessName,
@@ -88,16 +76,16 @@ function UserProfileSection({
   return (
     <div className={`p-4 border-t border-sidebar-border bg-sidebar ${isMobile ? "mt-auto" : ""}`}>
       {mounted ? (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <UserProfileButton businessName={businessName} userEmail={userEmail} interactive={true} />
+            <UserProfileButton businessName={businessName} userEmail={userEmail} />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
             align="start"
             side={isMobile ? "top" : "right"}
             sideOffset={isMobile ? 10 : 20}
-            className="w-[260px] p-2 rounded-2xl shadow-xl border-border"
+            className="w-[260px] p-2 rounded-2xl shadow-xl border-border z-[9999]"
           >
             <div className="flex items-center gap-3 p-2 mb-2 bg-muted/50 rounded-xl border border-border">
               <Avatar className="h-10 w-10 border border-background shadow-sm">
@@ -135,7 +123,23 @@ function UserProfileSection({
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <UserProfileButton businessName={businessName} userEmail={userEmail} interactive={false} />
+        <div className="w-full h-12 p-2 flex items-center justify-start gap-3 rounded-xl">
+          <Avatar className="h-8 w-8 border border-border shadow-sm">
+            <AvatarImage src="" />
+            <AvatarFallback className="bg-primary text-primary-foreground font-medium text-xs">
+              {userEmail?.[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-start text-left min-w-0 flex-1">
+            <span className="text-sm font-semibold text-sidebar-foreground truncate w-full leading-none mb-1">
+              {businessName}
+            </span>
+            <span className="text-xs text-muted-foreground truncate w-full leading-none font-normal">
+              {userEmail}
+            </span>
+          </div>
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        </div>
       )}
     </div>
   )

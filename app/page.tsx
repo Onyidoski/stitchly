@@ -27,7 +27,7 @@ export default async function Dashboard() {
   const tenantId = profile?.tenant_id
 
   // 3. Fetch Real Data
-  const [clientsResult, activeOrdersResult, completedOrdersResult, financialResult, recentOrdersResult, allOrdersResult] = await Promise.all([
+  const [clientsResult, activeOrdersResult, completedOrdersResult, financialResult, recentOrdersResult, allOrdersResult, expensesResult] = await Promise.all([
     // Total Clients
     supabase.from('clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     
@@ -64,6 +64,12 @@ export default async function Dashboard() {
     supabase
       .from('orders')
       .select('created_at, paid_amount')
+      .eq('tenant_id', tenantId),
+
+    // All Expenses (for profit calculation)
+    supabase
+      .from('expenses')
+      .select('created_at, amount')
       .eq('tenant_id', tenantId)
   ])
 
@@ -78,11 +84,12 @@ export default async function Dashboard() {
 
   // --- CHART DATA PROCESSING ---
   const allOrders = allOrdersResult.data || []
+  const allExpenses = expensesResult.data || []
   const monthlyData = [
-    { name: "Jan", total: 0 }, { name: "Feb", total: 0 }, { name: "Mar", total: 0 },
-    { name: "Apr", total: 0 }, { name: "May", total: 0 }, { name: "Jun", total: 0 },
-    { name: "Jul", total: 0 }, { name: "Aug", total: 0 }, { name: "Sep", total: 0 },
-    { name: "Oct", total: 0 }, { name: "Nov", total: 0 }, { name: "Dec", total: 0 },
+    { name: "Jan", total: 0, expenses: 0, profit: 0 }, { name: "Feb", total: 0, expenses: 0, profit: 0 }, { name: "Mar", total: 0, expenses: 0, profit: 0 },
+    { name: "Apr", total: 0, expenses: 0, profit: 0 }, { name: "May", total: 0, expenses: 0, profit: 0 }, { name: "Jun", total: 0, expenses: 0, profit: 0 },
+    { name: "Jul", total: 0, expenses: 0, profit: 0 }, { name: "Aug", total: 0, expenses: 0, profit: 0 }, { name: "Sep", total: 0, expenses: 0, profit: 0 },
+    { name: "Oct", total: 0, expenses: 0, profit: 0 }, { name: "Nov", total: 0, expenses: 0, profit: 0 }, { name: "Dec", total: 0, expenses: 0, profit: 0 },
   ]
 
   allOrders.forEach(order => {
@@ -93,6 +100,23 @@ export default async function Dashboard() {
       monthlyData[monthIndex].total += amount
     }
   })
+
+  allExpenses.forEach((exp: any) => {
+    const date = new Date(exp.created_at)
+    const monthIndex = date.getMonth()
+    const amount = Number(exp.amount) || 0
+    if (date.getFullYear() === new Date().getFullYear()) {
+      monthlyData[monthIndex].expenses += amount
+    }
+  })
+
+  // Calculate profit per month
+  monthlyData.forEach(m => {
+    m.profit = m.total - m.expenses
+  })
+
+  // Calculate total expenses
+  const totalExpenses = allExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount || 0), 0)
 
   return (
     <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount}>
@@ -107,9 +131,10 @@ export default async function Dashboard() {
         </div>
 
         {/* METRIC CARDS */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <DashboardStats
             totalRevenue={monthlyData.reduce((acc, curr) => acc + curr.total, 0)}
+            totalExpenses={totalExpenses}
             activeOrders={activeOrders}
             completedOrders={completedOrders}
             totalClients={totalClients || 0}
