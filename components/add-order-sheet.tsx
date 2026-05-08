@@ -16,42 +16,43 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [imageUrls, setImageUrls] = useState<string[]>([])
-  
-  // AI States
+
   const [aiLoading, setAiLoading] = useState(false)
   const [estimate, setEstimate] = useState<{
-    fabric_yards: string;
-    price_min: number;
-    price_max: number;
-    reasoning: string;
+    fabric_yards: string
+    price_min: number
+    price_max: number
+    reasoning: string
   } | null>(null)
-  const [description, setDescription] = useState("") 
-  
-  // Measurement State
+  const [description, setDescription] = useState("")
   const [clientMeasurements, setClientMeasurements] = useState<any>(null)
 
   const router = useRouter()
   const supabase = createClient()
 
-  // Fetch measurements when the sheet opens
+  const bustMeasurement = clientMeasurements?.bust ?? clientMeasurements?.chest
+  const hipMeasurement = clientMeasurements?.hip ?? clientMeasurements?.hips
+  const sleeveMeasurement = clientMeasurements?.sleeve ?? clientMeasurements?.sleeve_length_full
+  const lengthMeasurement =
+    clientMeasurements?.length ??
+    clientMeasurements?.full_length ??
+    clientMeasurements?.blouse_length
+
   useEffect(() => {
     async function fetchMeasurements() {
-      if (open && clientId) {
-        const { data, error } = await supabase
-          .from('measurements') // Ensure this matches your actual table name
-          .select('*')
-          .eq('client_id', clientId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
+      if (!open || !clientId) return
 
-        if (data) {
-          setClientMeasurements(data)
-        } else {
-            setClientMeasurements(null)
-        }
-      }
+      const { data } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      setClientMeasurements(data ?? null)
     }
+
     fetchMeasurements()
   }, [open, clientId, supabase])
 
@@ -67,21 +68,21 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
     try {
       const res = await fetch('/api/estimate', {
         method: 'POST',
-        body: JSON.stringify({ 
-            description,
-            measurements: clientMeasurements 
-        })
+        body: JSON.stringify({
+          description,
+          measurements: clientMeasurements,
+        }),
       })
-      
+
       const data = await res.json()
-      
+
       if (data.result) {
         setEstimate(data.result)
         toast.success("Estimate generated!")
       } else {
-        toast.error("Could not generate estimate")
+        toast.error(data.error || "Could not generate estimate")
       }
-    } catch (e) {
+    } catch {
       toast.error("AI service error")
     } finally {
       setAiLoading(false)
@@ -113,7 +114,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           delivery_date: formData.get("delivery_date"),
           style_image_urls: imageUrls,
           status: 'cutting',
-          payment_status: 'unpaid'
+          payment_status: 'unpaid',
         })
 
         if (!error) {
@@ -129,6 +130,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
         }
       }
     }
+
     setLoading(false)
   }
 
@@ -147,67 +149,65 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-6">
-
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-                <Label htmlFor="fabric">Fabric / Style Description</Label>
-                <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleAiEstimate}
-                    disabled={aiLoading}
-                    className="h-6 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                >
-                    {aiLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
-                    {aiLoading ? 'Analyzing...' : 'AI Estimate'}
-                </Button>
+              <Label htmlFor="fabric">Fabric / Style Description</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAiEstimate}
+                disabled={aiLoading}
+                className="h-6 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:text-indigo-200 dark:hover:bg-indigo-500/10"
+              >
+                {aiLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                {aiLoading ? 'Analyzing...' : 'AI Estimate'}
+              </Button>
             </div>
-            <Textarea 
-                id="fabric" 
-                name="fabric" 
-                placeholder="e.g. Off-shoulder Ankara gown with lace trimming..." 
-                required 
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+            <Textarea
+              id="fabric"
+              name="fabric"
+              placeholder="e.g. Off-shoulder Ankara gown with lace trimming..."
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
 
-            {/* Measurement Feedback Logic */}
             {clientMeasurements ? (
-                <p className="text-[10px] text-emerald-600 text-right animate-in fade-in">
-                    ✓ Using client measurements (Bust: {clientMeasurements.chest || '-'}, Hip: {clientMeasurements.hip || '-'})
-                </p>
+              <p className="text-[10px] text-emerald-600 text-right animate-in fade-in">
+                Using client measurements (Bust: {bustMeasurement || '-'}, Hip: {hipMeasurement || '-'}, Sleeve: {sleeveMeasurement || '-'}, Length: {lengthMeasurement || '-'})
+              </p>
             ) : (
-                <p className="text-[10px] text-amber-600 text-right animate-in fade-in flex justify-end items-center gap-1 flex-wrap">
-                    <span>⚠️ No measurements found. Using standard sizing.</span>
-                    <span className="italic opacity-80">(Input client measurement for precise estimate)</span>
-                </p>
+              <p className="text-[10px] text-amber-600 text-right animate-in fade-in flex justify-end items-center gap-1 flex-wrap">
+                <span>No measurements found. Using standard sizing.</span>
+                <span className="italic opacity-80">(Input client measurement for precise estimate)</span>
+              </p>
             )}
 
             {estimate && (
-                <div className="rounded-md bg-indigo-50 p-3 border border-indigo-100 text-sm animate-in slide-in-from-top-2">
-                    <div className="flex justify-between items-start mb-2">
-                        <span className="font-semibold text-indigo-900">AI Suggestion:</span>
-                        <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-5 px-2 text-[10px] text-indigo-700 bg-white border border-indigo-200 hover:bg-white"
-                            onClick={() => {
-                                const input = document.getElementById('amount') as HTMLInputElement
-                                if(input) input.value = estimate.price_max.toString()
-                                toast.success(`Applied price: ₦${estimate.price_max}`)
-                            }}
-                        >
-                            Apply Price <ArrowRight className="w-3 h-3 ml-1" />
-                        </Button>
-                    </div>
-                    <div className="space-y-1 text-indigo-800">
-                        <p>📏 <span className="font-medium">Fabric:</span> {estimate.fabric_yards}</p>
-                        <p>💰 <span className="font-medium">Price:</span> ₦{estimate.price_min.toLocaleString()} - ₦{estimate.price_max.toLocaleString()}</p>
-                        <p className="text-xs text-indigo-600 mt-1 italic">"{estimate.reasoning}"</p>
-                    </div>
+              <div className="rounded-xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50 via-background to-slate-50 p-4 text-sm shadow-sm animate-in slide-in-from-top-2 dark:border-indigo-500/20 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/40">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-semibold text-indigo-900 dark:text-indigo-100">AI Suggestion:</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 rounded-full px-3 text-[10px] text-indigo-700 bg-white/90 border border-indigo-200 hover:bg-white dark:bg-slate-900/80 dark:border-indigo-400/30 dark:text-indigo-200 dark:hover:bg-slate-900"
+                    onClick={() => {
+                      const input = document.getElementById('amount') as HTMLInputElement
+                      if (input) input.value = estimate.price_max.toString()
+                      toast.success(`Applied price: N${estimate.price_max}`)
+                    }}
+                  >
+                    Apply Price <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
+                <div className="space-y-2 text-indigo-900 dark:text-indigo-100">
+                  <p><span className="font-medium text-indigo-700 dark:text-indigo-300">Fabric:</span> {estimate.fabric_yards}</p>
+                  <p><span className="font-medium text-indigo-700 dark:text-indigo-300">Price:</span> N{estimate.price_min.toLocaleString()} - N{estimate.price_max.toLocaleString()}</p>
+                  <p className="text-xs leading-6 text-slate-700 italic dark:text-slate-300">"{estimate.reasoning}"</p>
+                </div>
+              </div>
             )}
           </div>
 
@@ -224,7 +224,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Total Amount (₦)</Label>
+              <Label htmlFor="amount">Total Amount (N)</Label>
               <Input id="amount" name="amount" type="number" placeholder="0.00" required />
             </div>
             <div className="space-y-2">

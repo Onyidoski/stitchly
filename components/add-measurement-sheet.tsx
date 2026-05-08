@@ -16,6 +16,14 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
   const router = useRouter()
   const supabase = createClient()
 
+  const getOptionalValue = (formData: FormData, key: string) => {
+    const value = formData.get(key)
+    if (typeof value !== "string") return value
+
+    const trimmed = value.trim()
+    return trimmed === "" ? null : trimmed
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
@@ -36,45 +44,45 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           tenant_id: profile.tenant_id,
           client_id: clientId,
           // Body
-          round_shoulder: formData.get("round_shoulder"),
-          round_armhole: formData.get("round_armhole"),
-          round_upper_bust: formData.get("round_upper_bust"),
-          shoulder: formData.get("shoulder"),
-          bust_span: formData.get("bust_span"),
-          bust: formData.get("bust"),
-          bust_point: formData.get("bust_point"),
-          underbust: formData.get("underbust"),
-          underbust_point: formData.get("underbust_point"),
-          waist: formData.get("waist"),
-          waist_point: formData.get("waist_point"),
-          hip: formData.get("hip"),
-          back_length: formData.get("back_length"),
-          hip_point: formData.get("hip_point"),
-          knee_length: formData.get("knee_length"),
-          full_length: formData.get("full_length"),
-          blouse_length: formData.get("blouse_length"),
+          round_shoulder: getOptionalValue(formData, "round_shoulder"),
+          round_armhole: getOptionalValue(formData, "round_armhole"),
+          round_upper_bust: getOptionalValue(formData, "round_upper_bust"),
+          shoulder: getOptionalValue(formData, "shoulder"),
+          bust_span: getOptionalValue(formData, "bust_span"),
+          bust: getOptionalValue(formData, "bust"),
+          bust_point: getOptionalValue(formData, "bust_point"),
+          underbust: getOptionalValue(formData, "underbust"),
+          underbust_point: getOptionalValue(formData, "underbust_point"),
+          waist: getOptionalValue(formData, "waist"),
+          waist_point: getOptionalValue(formData, "waist_point"),
+          hip: getOptionalValue(formData, "hip"),
+          back_length: getOptionalValue(formData, "back_length"),
+          hip_point: getOptionalValue(formData, "hip_point"),
+          knee_length: getOptionalValue(formData, "knee_length"),
+          full_length: getOptionalValue(formData, "full_length"),
+          blouse_length: getOptionalValue(formData, "blouse_length"),
 
           // Sleeves
-          sleeve_length_short: formData.get("sleeve_length_short"),
-          round_sleeve_short: formData.get("round_sleeve_short"),
-          sleeve_length_elbow: formData.get("sleeve_length_elbow"),
-          round_sleeve_elbow: formData.get("round_sleeve_elbow"),
-          sleeve_length_3_4: formData.get("sleeve_length_3_4"),
-          round_sleeve_3_4: formData.get("round_sleeve_3_4"),
-          sleeve_length_full: formData.get("sleeve_length_full"),
-          round_sleeve_full: formData.get("round_sleeve_full"),
+          sleeve_length_short: getOptionalValue(formData, "sleeve_length_short"),
+          round_sleeve_short: getOptionalValue(formData, "round_sleeve_short"),
+          sleeve_length_elbow: getOptionalValue(formData, "sleeve_length_elbow"),
+          round_sleeve_elbow: getOptionalValue(formData, "round_sleeve_elbow"),
+          sleeve_length_3_4: getOptionalValue(formData, "sleeve_length_3_4"),
+          round_sleeve_3_4: getOptionalValue(formData, "round_sleeve_3_4"),
+          sleeve_length_full: getOptionalValue(formData, "sleeve_length_full"),
+          round_sleeve_full: getOptionalValue(formData, "round_sleeve_full"),
 
           // Trouser
-          trouser_waist: formData.get("trouser_waist"),
-          trouser_hips: formData.get("trouser_hips"),
-          trouser_hip_point: formData.get("trouser_hip_point"),
-          thigh: formData.get("thigh"),
-          round_knee: formData.get("round_knee"),
-          ankle: formData.get("ankle"),
-          trouser_length: formData.get("trouser_length"),
-          pallazo_length: formData.get("pallazo_length"),
+          trouser_waist: getOptionalValue(formData, "trouser_waist"),
+          trouser_hips: getOptionalValue(formData, "trouser_hips"),
+          trouser_hip_point: getOptionalValue(formData, "trouser_hip_point"),
+          thigh: getOptionalValue(formData, "thigh"),
+          round_knee: getOptionalValue(formData, "round_knee"),
+          ankle: getOptionalValue(formData, "ankle"),
+          trouser_length: getOptionalValue(formData, "trouser_length"),
+          pallazo_length: getOptionalValue(formData, "pallazo_length"),
 
-          notes: formData.get("notes"),
+          notes: getOptionalValue(formData, "notes"),
         })
 
         if (!error) {
@@ -83,7 +91,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           router.refresh()
         } else {
           console.error(error)
-          toast.error("Failed to add measurements")
+          toast.error(error.message || "Failed to add measurements")
         }
       }
     }
