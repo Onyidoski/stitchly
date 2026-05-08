@@ -39,10 +39,10 @@ export default async function ClientsPage() {
     return (
         <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount || 0}>
             <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">Clients</h2>
-                        <p className="text-muted-foreground">Manage your customer database and measurements.</p>
+                        <p className="text-muted-foreground text-sm">Manage your customer database and measurements.</p>
                     </div>
                     <AddClientSheet />
                 </div>

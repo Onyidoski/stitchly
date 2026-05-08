@@ -77,6 +77,7 @@ export default function LoginPage() {
                                 src="/logo.png"
                                 alt="Logo"
                                 fill
+                                sizes="96px"
                                 className="object-cover"
                             />
                         </div>
@@ -204,6 +205,7 @@ export default function LoginPage() {
                     src="/login-hero4.png"
                     alt="Fashion Model"
                     fill
+                    sizes="50vw"
                     className="object-cover"
                     priority
                 />

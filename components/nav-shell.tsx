@@ -11,6 +11,8 @@ import {
   LogOut,
   Settings,
   ChevronUp,
+  CalendarDays,
+  BarChart3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
@@ -175,7 +177,9 @@ export default function NavShell({
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Clients', href: '/clients', icon: Users },
     { name: 'Orders', href: '/orders', icon: Scissors },
+    { name: 'Calendar', href: '/calendar', icon: CalendarDays },
     { name: 'Invoices', href: '/invoices', icon: FileText },
+    { name: 'Reports', href: '/reports', icon: BarChart3 },
   ]
 
   return (

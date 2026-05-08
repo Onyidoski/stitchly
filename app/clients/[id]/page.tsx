@@ -2,16 +2,15 @@ import { createClient } from '@/utils/supabase/server'
 import NavShell from '@/components/nav-shell'
 import { AddMeasurementSheet } from '@/components/add-measurement-sheet'
 import { AddOrderSheet } from '@/components/add-order-sheet'
-import { EditOrderSheet } from '@/components/edit-order-sheet'
 import { EditMeasurementSheet } from '@/components/edit-measurement-sheet'
-import { DeleteOrderButton } from '@/components/delete-order-button' // [1] IMPORT ADDED
-import { ExpenseManager } from '@/components/expense-manager'
+import { OrderSelectionWrapper } from '@/components/order-selection-wrapper'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Phone, User, Calendar } from 'lucide-react'
-import Image from "next/image"
+import { Phone, User } from 'lucide-react'
+import Link from 'next/link'
+import { FileText } from 'lucide-react'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -111,90 +110,13 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                         <AddOrderSheet clientId={client.id} />
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                        {orders && orders.length > 0 ? (
-                            orders.map((order) => (
-                                <Card key={order.id} className="overflow-hidden flex flex-col">
-                                    <CardHeader className="bg-muted/30 pb-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <CardTitle className="text-base font-semibold line-clamp-1 pr-2">
-                                                    {order.fabric_description || 'Custom Order'}
-                                                </CardTitle>
-                                                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                                                    <Calendar className="h-3 w-3" />
-                                                    Due: {new Date(order.delivery_date).toLocaleDateString()}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant={order.status === 'ready' ? 'default' : 'outline'} className="capitalize">
-                                                    {order.status}
-                                                </Badge>
-
-                                                {/* ACTION BUTTONS */}
-                                                <EditOrderSheet order={order} />
-                                                <DeleteOrderButton orderId={order.id} /> {/* [2] BUTTON ADDED HERE */}
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-
-                                    <CardContent className="pt-6 flex-1 flex flex-col gap-6">
-                                        {order.style_image_urls && order.style_image_urls.length > 0 && (
-                                            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-                                                {order.style_image_urls.map((url: string, i: number) => (
-                                                    <a
-                                                        key={i}
-                                                        href={url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="relative h-48 w-48 shrink-0 rounded-xl overflow-hidden border shadow-sm snap-start hover:opacity-95 transition-all bg-muted"
-                                                    >
-                                                        <Image
-                                                            src={url}
-                                                            alt="Style Reference"
-                                                            fill
-                                                            className="object-cover"
-                                                            sizes="(max-width: 768px) 192px, 192px"
-                                                        />
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        <div className="mt-auto flex justify-between items-center text-sm border-t pt-3">
-                                            <div className="grid gap-1">
-                                                <span className="text-muted-foreground">Color: <span className="text-foreground">{order.color || 'N/A'}</span></span>
-                                                <span className="text-muted-foreground">Qty: <span className="text-foreground">{order.quantity}</span></span>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="font-bold text-lg flex items-center justify-end gap-1">
-                                                    <span>₦{order.total_amount?.toLocaleString()}</span>
-                                                </div>
-                                                <div className="flex items-center justify-end gap-2">
-                                                    {order.paid_amount > 0 && order.paid_amount < order.total_amount && (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            Pd: ₦{order.paid_amount.toLocaleString()}
-                                                        </span>
-                                                    )}
-                                                    <Badge variant={order.payment_status === 'paid' ? 'secondary' : 'destructive'} className="text-xs capitalize">
-                                                        {order.payment_status}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* EXPENSE TRACKER */}
-                                        <ExpenseManager orderId={order.id} orderTotal={order.total_amount || 0} />
-                                    </CardContent>
-                                </Card>
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                                No orders yet.
-                            </div>
-                        )}
-                    </div>
+                    {orders && orders.length > 0 ? (
+                        <OrderSelectionWrapper orders={orders} clientId={client.id} />
+                    ) : (
+                        <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                            No orders yet.
+                        </div>
+                    )}
                 </TabsContent>
 
                 {/* MEASUREMENTS TAB */}
@@ -215,7 +137,14 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                                                 <span className="text-xs font-normal">Measurement ID: {m.id.slice(0, 4)}</span>
                                             </CardTitle>
 
-                                            <EditMeasurementSheet measurement={m} />
+                                            <div className="flex items-center gap-1">
+                                                <Link href={`/clients/${client.id}/measurements/${m.id}`}>
+                                                    <div className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent hover:text-accent-foreground text-muted-foreground cursor-pointer transition-colors" title="View Document">
+                                                        <FileText className="h-4 w-4" />
+                                                    </div>
+                                                </Link>
+                                                <EditMeasurementSheet measurement={m} />
+                                            </div>
                                         </div>
                                     </CardHeader>
 
