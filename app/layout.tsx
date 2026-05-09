@@ -230,6 +230,75 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* PWA Loading Screen — shows the logo instantly while the app boots */}
+        <div
+          id="pwa-splash"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#ffffff',
+            transition: 'opacity 0.4s ease-out',
+          }}
+        >
+          <img
+            src="/logo.png"
+            alt="Stitchly"
+            width={100}
+            height={100}
+            style={{
+              animation: 'pulse-logo 1.8s ease-in-out infinite',
+            }}
+          />
+          <p
+            style={{
+              marginTop: '16px',
+              fontSize: '13px',
+              color: '#9ca3af',
+              fontFamily: 'system-ui, sans-serif',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Loading...
+          </p>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+                @keyframes pulse-logo {
+                  0%, 100% { opacity: 1; transform: scale(1); }
+                  50% { opacity: 0.7; transform: scale(0.96); }
+                }
+              `,
+            }}
+          />
+        </div>
+
+        {/* Inline script to hide the splash once app is interactive */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function hideSplash() {
+                  var s = document.getElementById('pwa-splash');
+                  if (s) {
+                    s.style.opacity = '0';
+                    setTimeout(function() { s.remove(); }, 400);
+                  }
+                }
+                if (document.readyState === 'complete') {
+                  hideSplash();
+                } else {
+                  window.addEventListener('load', hideSplash);
+                }
+              })();
+            `,
+          }}
+        />
+
         <ThemeProvider
             attribute="class"
             defaultTheme="system"
