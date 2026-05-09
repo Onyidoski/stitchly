@@ -13,6 +13,7 @@ import {
   ChevronUp,
   CalendarDays,
   BarChart3,
+  Receipt,
 } from "lucide-react"
 import { PushNotificationToggle } from "@/components/push-notification-toggle"
 import { Button } from "@/components/ui/button"
@@ -180,6 +181,7 @@ export default function NavShell({
     { name: 'Orders', href: '/orders', icon: Scissors },
     { name: 'Calendar', href: '/calendar', icon: CalendarDays },
     { name: 'Invoices', href: '/invoices', icon: FileText },
+    { name: 'Receipts', href: '/receipts', icon: Receipt },
     { name: 'Reports', href: '/reports', icon: BarChart3 },
   ]
 

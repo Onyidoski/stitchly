@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { EditOrderSheet } from '@/components/edit-order-sheet'
 import { DeleteOrderButton } from '@/components/delete-order-button'
 import { ExpenseManager } from '@/components/expense-manager'
-import { Calendar, FileText, X, Loader2 } from 'lucide-react'
+import { Calendar, FileText, X, Loader2, Receipt } from 'lucide-react'
 import Image from "next/image"
 import { RecordBulkPaymentDialog } from '@/components/record-bulk-payment-dialog'
 
@@ -36,6 +36,7 @@ export function OrderSelectionWrapper({
 }) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false)
+    const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false)
     const router = useRouter()
 
     const toggleOrder = (id: string) => {
@@ -62,6 +63,12 @@ export function OrderSelectionWrapper({
         setIsGeneratingInvoice(true)
         const orderIds = Array.from(selectedIds).join(',')
         router.push(`/invoices/client/${clientId}?orders=${orderIds}`)
+    }
+
+    const generateCombinedReceipt = () => {
+        setIsGeneratingReceipt(true)
+        const orderIds = Array.from(selectedIds).join(',')
+        router.push(`/receipts/client/${clientId}?orders=${orderIds}`)
     }
 
     const selectedCount = selectedIds.size
@@ -231,19 +238,31 @@ export function OrderSelectionWrapper({
             {/* Floating Action Bar — appears when orders are selected */}
             {selectedCount > 0 && (
                 <div className="fixed bottom-0 left-0 right-0 md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:right-auto z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-                    <div className="flex items-center justify-between gap-3 bg-card border-t md:border shadow-2xl md:rounded-2xl px-4 py-3 md:px-5 md:py-3.5 backdrop-blur-sm">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm font-bold text-foreground whitespace-nowrap">
-                                {selectedCount} selected
-                            </span>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap hidden xs:inline">·</span>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap truncate hidden xs:inline">
-                                ₦{selectedTotal.toLocaleString()}
-                                {selectedBalance > 0 && (
-                                    <> due</>
-                                )}
-                            </span>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 bg-card border-t md:border shadow-2xl md:rounded-2xl px-4 py-3 md:px-5 md:py-3.5 backdrop-blur-sm">
+                        {/* Info row */}
+                        <div className="flex items-center justify-between md:justify-start gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-sm font-bold text-foreground whitespace-nowrap">
+                                    {selectedCount} selected
+                                </span>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">·</span>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap truncate">
+                                    ₦{selectedTotal.toLocaleString()}
+                                    {selectedBalance > 0 && (
+                                        <> due</>
+                                    )}
+                                </span>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0 md:hidden"
+                                onClick={() => setSelectedIds(new Set())}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         </div>
+                        {/* Buttons row */}
                         <div className="flex items-center gap-2 shrink-0">
                             {selectedBalance > 0 && (
                                 <RecordBulkPaymentDialog 
@@ -255,7 +274,7 @@ export function OrderSelectionWrapper({
                                 onClick={generateCombinedInvoice}
                                 size="sm"
                                 disabled={isGeneratingInvoice}
-                                className="gap-2 rounded-xl shadow-md whitespace-nowrap"
+                                className="gap-1.5 rounded-xl shadow-md whitespace-nowrap flex-1 md:flex-none"
                             >
                                 {isGeneratingInvoice ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -265,9 +284,23 @@ export function OrderSelectionWrapper({
                                 <span>{isGeneratingInvoice ? 'Loading...' : 'Invoice'}</span>
                             </Button>
                             <Button
+                                onClick={generateCombinedReceipt}
+                                size="sm"
+                                variant="outline"
+                                disabled={isGeneratingReceipt}
+                                className="gap-1.5 rounded-xl shadow-md whitespace-nowrap flex-1 md:flex-none"
+                            >
+                                {isGeneratingReceipt ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Receipt className="h-4 w-4" />
+                                )}
+                                <span>{isGeneratingReceipt ? 'Loading...' : 'Receipt'}</span>
+                            </Button>
+                            <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0 hidden md:flex"
                                 onClick={() => setSelectedIds(new Set())}
                             >
                                 <X className="h-4 w-4" />
