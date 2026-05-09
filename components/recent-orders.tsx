@@ -2,6 +2,7 @@
 'use client'
 
 import { useRouter } from "next/navigation"
+import { useTopLoader } from "nextjs-toploader"
 
 interface RecentOrdersProps {
     orders: any[]
@@ -9,6 +10,12 @@ interface RecentOrdersProps {
 
 export function RecentOrders({ orders }: RecentOrdersProps) {
     const router = useRouter()
+    const { start } = useTopLoader()
+
+    const handleNavigate = (url: string) => {
+        start()
+        router.push(url)
+    }
 
     if (orders.length === 0) {
         return (
@@ -32,7 +39,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                         key={order.id}
                         // [FIX] Changed hover:bg-slate-50 to hover:bg-accent for dark mode support
                         className="flex items-center justify-between p-2 hover:bg-accent rounded-lg cursor-pointer transition-colors"
-                        onClick={() => router.push(`/clients/${order.client_id}`)}
+                        onClick={() => handleNavigate(`/clients/${order.client_id}`)}
                     >
                         <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">

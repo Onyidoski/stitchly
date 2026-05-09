@@ -1,20 +1,74 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Ruler, Loader2 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Ruler, Loader2, Sparkles, Wand2 } from "lucide-react"
 import { toast } from "sonner"
 
 export function AddMeasurementSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [aiText, setAiText] = useState("")
+  const [aiLoading, setAiLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const formRef = useRef<HTMLFormElement>(null)
+  const DRAFT_KEY = `stitchly_measurement_draft_${clientId}`
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        try {
+          const draft = localStorage.getItem(DRAFT_KEY)
+          if (draft) {
+            const data = JSON.parse(draft)
+            let restored = 0
+            
+            if (data.aiText !== undefined) {
+              setAiText(data.aiText)
+            }
+
+            Object.entries(data).forEach(([key, value]) => {
+              if (key === 'aiText') return
+              const el = document.getElementById(key) as HTMLInputElement
+              if (el && value) {
+                el.value = String(value)
+                restored++
+              }
+            })
+            if (restored > 0) {
+              toast.success("Unsaved draft restored automatically")
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse measurement draft", e)
+        }
+      }, 100)
+    }
+  }, [open, DRAFT_KEY])
+
+  const saveDraft = (currentAiText = aiText) => {
+    if (!formRef.current) return
+    const formData = new FormData(formRef.current)
+    const draft: Record<string, any> = { aiText: currentAiText }
+    formData.forEach((value, key) => {
+      const strVal = String(value).trim()
+      if (strVal) draft[key] = strVal
+    })
+    
+    if (Object.keys(draft).length > 1 || draft.aiText) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+    } else {
+      localStorage.removeItem(DRAFT_KEY)
+    }
+  }
 
   const getOptionalValue = (formData: FormData, key: string) => {
     const value = formData.get(key)
@@ -87,6 +141,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
 
         if (!error) {
           toast.success("Measurements added successfully")
+          localStorage.removeItem(DRAFT_KEY)
           setOpen(false)
           router.refresh()
         } else {
@@ -98,12 +153,58 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
     setLoading(false)
   }
 
+  
+  const handleAIExtract = async () => {
+    if (!aiText.trim()) {
+      toast.error("Please paste some measurements first.");
+      return;
+    }
+    
+    setAiLoading(true);
+    try {
+      const res = await fetch('/api/measurements/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: aiText })
+      });
+      
+      if (!res.ok) throw new Error("Failed to parse");
+      
+      const data = await res.json();
+      
+      let populatedCount = 0;
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+          const el = document.getElementById(key) as HTMLInputElement;
+          if (el) {
+            el.value = String(value);
+            populatedCount++;
+          }
+        }
+      });
+
+      if (populatedCount > 0) {
+        toast.success(`Successfully extracted ${populatedCount} measurements!`);
+        setAiText("");
+        setTimeout(() => saveDraft(""), 0);
+      } else {
+        toast.error("Could not find any clear measurements in the text.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to extract measurements. Try manually.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   const Field = ({ id, label }: { id: string, label: string }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
-      <Input id={id} name={id} type="number" step="0.1" className="h-9 bg-muted/50 border-input" />
+      <Input id={id} name={id} type="text" className="h-9 bg-muted/50 border-input" />
     </div>
   )
+
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -126,7 +227,7 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
         </SheetHeader>
 
         {/* FORM: Takes all remaining space */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <form ref={formRef} onSubmit={handleSubmit} onChange={() => setTimeout(() => saveDraft(), 0)} className="flex flex-col flex-1 overflow-hidden">
 
           {/* FIX 2: NATIVE SCROLLING
              Replaced <ScrollArea> with a simple div using 'overflow-y-auto'.
@@ -134,6 +235,43 @@ export function AddMeasurementSheet({ clientId }: { clientId: string }) {
           */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-8 pb-4">
+
+              {/* AI PASTE SECTION */}
+              <div className="bg-primary/5 rounded-lg border border-primary/20 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-primary font-medium">
+                  <Sparkles className="h-4 w-4" />
+                  <h3>Magic Paste</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Paste measurements from WhatsApp. Our AI will automatically map them to the correct fields below.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Textarea 
+                    placeholder="e.g. Length 40, shoulder 16, burst 38..." 
+                    className="min-h-[80px] text-sm bg-background resize-none"
+                    value={aiText}
+                    onChange={(e) => {
+                      setAiText(e.target.value)
+                      setTimeout(() => saveDraft(e.target.value), 0)
+                    }}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={handleAIExtract}
+                    disabled={aiLoading || !aiText.trim()}
+                    className="self-end"
+                  >
+                    {aiLoading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-4 w-4 mr-2" />
+                    )}
+                    Extract Measurements
+                  </Button>
+                </div>
+              </div>
 
               {/* 1. BODY MEASUREMENTS */}
               <div>

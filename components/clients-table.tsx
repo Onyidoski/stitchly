@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTopLoader } from "nextjs-toploader"
 import { Search, MoreHorizontal, Phone, MapPin } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,13 @@ interface ClientsTableProps {
 
 export function ClientsTable({ clients }: ClientsTableProps) {
     const router = useRouter()
+    const { start } = useTopLoader()
     const [searchTerm, setSearchTerm] = useState("")
+
+    const handleNavigate = (url: string) => {
+        start()
+        router.push(url)
+    }
 
     const filteredClients = clients.filter(client =>
         client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,7 +94,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                 <TableRow
                                     key={client.id}
                                     className="cursor-pointer hover:bg-muted/50 transition-colors border-0"
-                                    onClick={() => router.push(`/clients/${client.id}`)}
+                                    onClick={() => handleNavigate(`/clients/${client.id}`)}
                                 >
                                     <TableCell className="pl-6 font-medium">
                                         <div className="flex items-center gap-3">
@@ -123,8 +130,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-
-                                                <DropdownMenuItem onClick={() => router.push(`/clients/${client.id}`)}>
+                                                <DropdownMenuItem onClick={() => handleNavigate(`/clients/${client.id}`)}>
                                                     View Profile
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -151,7 +157,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                             <div
                                 key={client.id}
                                 className="p-4 flex flex-col gap-3 hover:bg-muted/50 transition-colors"
-                                onClick={() => router.push(`/clients/${client.id}`)}
+                                onClick={() => handleNavigate(`/clients/${client.id}`)}
                             >
                                 {/* Header Row */}
                                 <div className="flex justify-between items-start">
@@ -175,7 +181,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => router.push(`/clients/${client.id}`)}>
+                                                <DropdownMenuItem onClick={() => handleNavigate(`/clients/${client.id}`)}>
                                                     View Profile
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

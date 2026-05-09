@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,76 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
   const router = useRouter()
   const supabase = createClient()
+
+  const formRef = useRef<HTMLFormElement>(null)
+  const DRAFT_KEY = `stitchly_order_draft_${clientId}`
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        try {
+          const draft = localStorage.getItem(DRAFT_KEY)
+          if (draft) {
+            const data = JSON.parse(draft)
+            
+            if (data.description !== undefined) setDescription(data.description)
+            if (data.imageUrls !== undefined) setImageUrls(data.imageUrls)
+            if (data.estimate !== undefined) setEstimate(data.estimate)
+
+            let restored = 0
+            Object.entries(data).forEach(([key, value]) => {
+              if (['description', 'imageUrls', 'estimate'].includes(key)) return
+              const el = document.getElementById(key) as HTMLInputElement
+              if (el && value) {
+                el.value = String(value)
+                restored++
+              }
+            })
+            
+            if (restored > 0 || data.description || (data.imageUrls && data.imageUrls.length > 0)) {
+              toast.success("Unsaved draft restored automatically")
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse order draft", e)
+        }
+      }, 100)
+    }
+  }, [open, DRAFT_KEY])
+
+  const saveDraft = (overrides?: {
+    desc?: string;
+    imgs?: string[];
+    est?: any;
+  }) => {
+    if (!formRef.current) return
+    const formData = new FormData(formRef.current)
+    
+    const draft: Record<string, any> = {
+      description: overrides?.desc !== undefined ? overrides.desc : description,
+      imageUrls: overrides?.imgs !== undefined ? overrides.imgs : imageUrls,
+      estimate: overrides?.est !== undefined ? overrides.est : estimate
+    }
+
+    formData.forEach((value, key) => {
+      const strVal = String(value).trim()
+      if (strVal && key !== 'fabric') {
+        draft[key] = strVal
+      }
+    })
+    
+    // Only save if there's actual data
+    if (
+      Object.keys(draft).length > 3 || 
+      draft.description || 
+      (draft.imageUrls && draft.imageUrls.length > 0) || 
+      draft.estimate
+    ) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+    } else {
+      localStorage.removeItem(DRAFT_KEY)
+    }
+  }
 
   const bustMeasurement = clientMeasurements?.bust ?? clientMeasurements?.chest
   const hipMeasurement = clientMeasurements?.hip ?? clientMeasurements?.hips
@@ -78,6 +148,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
       if (data.result) {
         setEstimate(data.result)
+        setTimeout(() => saveDraft({ est: data.result }), 0)
         toast.success("Estimate generated!")
       } else {
         toast.error(data.error || "Could not generate estimate")
@@ -119,6 +190,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
 
         if (!error) {
           toast.success("New order created!")
+          localStorage.removeItem(DRAFT_KEY)
           setOpen(false)
           setImageUrls([])
           setEstimate(null)
@@ -148,7 +220,12 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
             Enter details and upload style references.
           </SheetDescription>
         </SheetHeader>
-        <form onSubmit={handleSubmit} className="grid gap-6 py-6">
+        <form 
+          ref={formRef}
+          onSubmit={handleSubmit} 
+          onChange={() => setTimeout(() => saveDraft(), 0)}
+          className="grid gap-6 py-6"
+        >
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="fabric">Fabric / Style Description</Label>
@@ -170,7 +247,10 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
               placeholder="e.g. Off-shoulder Ankara gown with lace trimming..."
               required
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value)
+                setTimeout(() => saveDraft({ desc: e.target.value }), 0)
+              }}
             />
 
             {clientMeasurements ? (
@@ -195,7 +275,10 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
                     className="h-7 rounded-full px-3 text-[10px] text-indigo-700 bg-white/90 border border-indigo-200 hover:bg-white dark:bg-slate-900/80 dark:border-indigo-400/30 dark:text-indigo-200 dark:hover:bg-slate-900"
                     onClick={() => {
                       const input = document.getElementById('amount') as HTMLInputElement
-                      if (input) input.value = estimate.price_max.toString()
+                      if (input) {
+                        input.value = estimate.price_max.toString()
+                        setTimeout(() => saveDraft(), 0)
+                      }
                       toast.success(`Applied price: N${estimate.price_max}`)
                     }}
                   >
@@ -236,7 +319,10 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           <div className="space-y-2">
             <Label>Style References</Label>
             <div className="border rounded-md p-4 bg-muted/50">
-              <ImageUploader onUploadComplete={(urls) => setImageUrls(urls)} />
+              <ImageUploader onUploadComplete={(urls) => {
+                setImageUrls(urls)
+                setTimeout(() => saveDraft({ imgs: urls }), 0)
+              }} />
             </div>
           </div>
 
