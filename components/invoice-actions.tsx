@@ -55,24 +55,46 @@ export function InvoiceActions() {
 
             if (isIOS) {
                 // ─── iOS PATH ──────────────────────────────────────────────────
-                // On iOS Safari, off-screen elements (even visibility:hidden ones)
-                // show through or cause blank captures due to compositing quirks.
-                // Instead, capture the ORIGINAL element — it's already rendered,
-                // already in the viewport, and images are already decoded.
+                // On iOS Safari, off-screen clones don't get images painted.
+                // Capture the ORIGINAL element directly.
 
-                // Pre-warm: force all images in the original element to decode
+                // Preload every image by creating a new Image() and awaiting onload.
+                // img.decode() is unreliable on iOS Safari — it resolves before
+                // the image is actually rasterized. new Image().onload is reliable.
                 const originalImgs = element.querySelectorAll('img')
-                await Promise.all(Array.from(originalImgs).map(async (img) => {
-                    try { await (img as any).decode() } catch { }
+                await Promise.all(Array.from(originalImgs).map((img) => {
+                    return new Promise<void>((resolve) => {
+                        const src = img.getAttribute('src')
+                        if (!src) { resolve(); return }
+
+                        // If the image is already fully loaded and has pixel data, skip
+                        if (img.complete && img.naturalWidth > 0) {
+                            resolve()
+                            return
+                        }
+
+                        // Create a throwaway Image to force the browser to decode
+                        const preloader = new Image()
+                        preloader.onload = () => resolve()
+                        preloader.onerror = () => resolve() // don't block on error
+                        preloader.src = src
+                    })
                 }))
 
-                // Short settle time
-                await new Promise(resolve => setTimeout(resolve, 300))
+                // Wait for 2 animation frames to guarantee iOS has painted the images
+                await new Promise<void>(resolve => {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => resolve())
+                    })
+                })
+
+                // Additional settle time for iOS compositing
+                await new Promise(resolve => setTimeout(resolve, 500))
 
                 dataUrl = await toJpeg(element, {
-                    quality: 0.88,
+                    quality: 0.95,
                     cacheBust: true,
-                    pixelRatio: 1.2,        // lower on iOS to stay within canvas memory limit
+                    pixelRatio: 1.5,
                     backgroundColor: '#ffffff',
                     height: element.scrollHeight,
                     style: { overflow: 'visible', boxShadow: 'none' }
@@ -80,13 +102,11 @@ export function InvoiceActions() {
 
             } else {
                 // ─── PC / DESKTOP PATH ─────────────────────────────────────────
-                // Clone into a fixed-width A4 container off-screen.
-                // Chrome/Edge paints off-screen fixed elements, so this is safe.
                 const container = document.createElement('div')
                 container.style.position = 'fixed'
                 container.style.top = '-10000px'
                 container.style.left = '-10000px'
-                container.style.width = '794px'   // A4 at 96 DPI
+                container.style.width = '794px'
                 container.style.zIndex = '-1'
                 container.style.pointerEvents = 'none'
                 document.body.appendChild(container)
@@ -101,7 +121,7 @@ export function InvoiceActions() {
                 clone.style.backgroundColor = '#ffffff'
                 container.appendChild(clone)
 
-                // Replace any remaining external image URLs with data URLs (fallback)
+                // Replace any remaining external image URLs with data URLs
                 const cloneImgs = clone.querySelectorAll('img')
                 await Promise.all(Array.from(cloneImgs).map(async (img) => {
                     const src = img.getAttribute('src')
@@ -112,15 +132,14 @@ export function InvoiceActions() {
                             img.removeAttribute('srcset')
                         }
                     }
-                    try { await (img as any).decode() } catch { }
                 }))
 
-                await new Promise(resolve => setTimeout(resolve, 400))
+                await new Promise(resolve => setTimeout(resolve, 500))
 
                 dataUrl = await toJpeg(clone, {
-                    quality: 0.88,
+                    quality: 0.95,
                     cacheBust: true,
-                    pixelRatio: 1.5,
+                    pixelRatio: 2,
                     backgroundColor: '#ffffff',
                     height: clone.scrollHeight,
                     style: { overflow: 'visible' }
@@ -128,6 +147,7 @@ export function InvoiceActions() {
 
                 document.body.removeChild(container)
             }
+
 
             // ─── BUILD PDF ────────────────────────────────────────────────────
             const tempPdf = new jsPDF('p', 'mm', 'a4')
