@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { EditOrderSheet } from '@/components/edit-order-sheet'
 import { DeleteOrderButton } from '@/components/delete-order-button'
 import { ExpenseManager } from '@/components/expense-manager'
-import { Calendar, FileText, X } from 'lucide-react'
+import { Calendar, FileText, X, Loader2 } from 'lucide-react'
 import Image from "next/image"
 import { RecordBulkPaymentDialog } from '@/components/record-bulk-payment-dialog'
 
@@ -35,6 +35,7 @@ export function OrderSelectionWrapper({
     clientId: string
 }) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false)
     const router = useRouter()
 
     const toggleOrder = (id: string) => {
@@ -58,6 +59,7 @@ export function OrderSelectionWrapper({
     }
 
     const generateCombinedInvoice = () => {
+        setIsGeneratingInvoice(true)
         const orderIds = Array.from(selectedIds).join(',')
         router.push(`/invoices/client/${clientId}?orders=${orderIds}`)
     }
@@ -252,10 +254,15 @@ export function OrderSelectionWrapper({
                             <Button
                                 onClick={generateCombinedInvoice}
                                 size="sm"
+                                disabled={isGeneratingInvoice}
                                 className="gap-2 rounded-xl shadow-md whitespace-nowrap"
                             >
-                                <FileText className="h-4 w-4" />
-                                <span>Invoice</span>
+                                {isGeneratingInvoice ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <FileText className="h-4 w-4" />
+                                )}
+                                <span>{isGeneratingInvoice ? 'Loading...' : 'Invoice'}</span>
                             </Button>
                             <Button
                                 variant="ghost"
