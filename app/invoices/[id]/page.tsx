@@ -28,6 +28,24 @@ export default async function InvoiceDetailsPage({
     const businessName = tenant?.business_name || 'Fashion Brand'
     const logoUrl = tenant?.logo_url || null
 
+    // Convert logo to base64 data URL server-side to avoid CORS issues in PDF export.
+    // html-to-image cannot load cross-origin images, but a data: URL works fine.
+    let logoDataUrl: string | null = null
+    if (logoUrl) {
+        try {
+            const res = await fetch(logoUrl)
+            if (res.ok) {
+                const buffer = await res.arrayBuffer()
+                const mime = res.headers.get('content-type') || 'image/png'
+                const base64 = Buffer.from(buffer).toString('base64')
+                logoDataUrl = `data:${mime};base64,${base64}`
+            }
+        } catch {
+            // If fetch fails, fall back to the raw URL (logo may still show in browser)
+            logoDataUrl = logoUrl
+        }
+    }
+
     const balance = (order.total_amount || 0) - (order.paid_amount || 0)
     const isPaid = balance <= 0
     const invoiceDate = new Date(order.created_at).toLocaleDateString()
@@ -47,12 +65,11 @@ export default async function InvoiceDetailsPage({
                 <div className="p-6 md:p-8 border-b flex justify-between items-start bg-muted/30 print:bg-white">
                     <div className="flex flex-col gap-4">
                         <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xl overflow-hidden relative">
-                            {logoUrl ? (
+                            {logoDataUrl ? (
                                 <img
-                                    src={logoUrl}
+                                    src={logoDataUrl}
                                     alt="Logo"
                                     className="absolute inset-0 w-full h-full object-contain p-1"
-                                    crossOrigin="anonymous"
                                 />
                             ) : (
                                 businessName.charAt(0)
