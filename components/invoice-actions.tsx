@@ -67,51 +67,37 @@ export function InvoiceActions() {
             clone.style.backgroundColor = '#ffffff'
             container.appendChild(clone)
 
-            // 3. NUCLEAR FIX FOR iOS: Replace every <img> with a <canvas>
-            // html-to-image serialises <img> to SVG foreignObject, which iOS Safari
-            // fails to render on the first attempt. <canvas> is read via toDataURL()
-            // directly, bypassing the SVG pipeline entirely.
+            // 3. FIX LOGO: Replace external img src with a base64 data URL
+            // html-to-image can't load cross-origin images (e.g. from Supabase storage),
+            // so we pre-fetch each image and inline it as a data URL.
             const images = clone.querySelectorAll('img')
             await Promise.all(Array.from(images).map(async (img) => {
-                try {
-                    // Ensure we have a data-URL or fetchable src
-                    let src = img.getAttribute('src') || ''
-                    if (src && !src.startsWith('data:')) {
-                        const fetched = await imageUrlToDataUrl(src)
-                        if (fetched) src = fetched
+                const src = img.getAttribute('src')
+                if (src && !src.startsWith('data:')) {
+                    const dataUrl = await imageUrlToDataUrl(src)
+                    if (dataUrl) {
+                        img.src = dataUrl
+                        img.removeAttribute('srcset')
                     }
-
-                    // Create an off-screen Image, wait for full load
-                    const tempImg = new window.Image()
-                    tempImg.crossOrigin = 'anonymous'
-                    tempImg.src = src
-                    await new Promise<void>((resolve, reject) => {
-                        tempImg.onload = () => resolve()
-                        tempImg.onerror = () => reject()
-                    })
-
-                    // Draw onto a canvas at the image's natural size
-                    const canvas = document.createElement('canvas')
-                    canvas.width = tempImg.naturalWidth
-                    canvas.height = tempImg.naturalHeight
-                    const ctx = canvas.getContext('2d')
-                    ctx?.drawImage(tempImg, 0, 0)
-
-                    // Transfer styles & class from the <img> to the <canvas>
-                    canvas.className = img.className
-                    canvas.style.cssText = img.style.cssText
-
-                    // Swap <img> → <canvas> in the clone
-                    img.parentNode?.replaceChild(canvas, img)
-                } catch {
-                    // If anything fails, leave the original <img> in place
                 }
             }))
 
-            // 4. Brief wait for layout to settle
-            await new Promise(resolve => setTimeout(resolve, 200))
+            // 4. Wait for ALL images to be fully decoded & render-ready.
+            // On iOS Safari, even base64 data-URL images in cloned elements
+            // are not immediately available — img.decode() ensures the browser
+            // has fully rasterised the image before we capture.
+            await Promise.all(Array.from(images).map(async (img) => {
+                try {
+                    await img.decode()
+                } catch {
+                    // decode() can reject for broken/missing images — safe to ignore
+                }
+            }))
 
-            // 5. Capture as JPEG (much smaller than PNG — typically 5–10x smaller)
+            // 5. Brief extra wait for layout to settle after decode
+            await new Promise(resolve => setTimeout(resolve, 300))
+
+            // 6. Capture as JPEG (much smaller than PNG — typically 5–10x smaller)
             const dataUrl = await toJpeg(clone, {
                 quality: 0.88,          // 88% quality — sharp text, small file
                 cacheBust: true,
