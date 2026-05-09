@@ -111,7 +111,6 @@ export function InvoiceActions() {
             }
 
             pdf.save('invoice.pdf')
-            pdf.save('invoice.pdf')
             toast.success("Invoice saved successfully")
 
             // 7. Restore Theme

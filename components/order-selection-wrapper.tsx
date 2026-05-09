@@ -10,6 +10,7 @@ import { DeleteOrderButton } from '@/components/delete-order-button'
 import { ExpenseManager } from '@/components/expense-manager'
 import { Calendar, FileText, X } from 'lucide-react'
 import Image from "next/image"
+import { RecordBulkPaymentDialog } from '@/components/record-bulk-payment-dialog'
 
 interface Order {
     id: string
@@ -242,6 +243,12 @@ export function OrderSelectionWrapper({
                             </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                            {selectedBalance > 0 && (
+                                <RecordBulkPaymentDialog 
+                                    selectedOrders={selectedOrders}
+                                    onSuccess={() => setSelectedIds(new Set())}
+                                />
+                            )}
                             <Button
                                 onClick={generateCombinedInvoice}
                                 size="sm"
