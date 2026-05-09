@@ -47,13 +47,22 @@ export function InvoiceActions() {
                 document.documentElement.classList.remove('dark')
             }
 
-            // 1. Hidden off-screen container at A4 width
+            // Detect iOS Safari — it refuses to paint elements at negative coords
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+            // 1. Hidden container at A4 width
+            // KEY iOS FIX: use visibility:hidden at top:0 instead of top:-10000px.
+            // iOS Safari skips painting/decoding images in elements far outside the viewport.
+            // visibility:hidden keeps it in the render tree so images are decoded.
             const container = document.createElement('div')
             container.style.position = 'fixed'
-            container.style.top = '-10000px'
-            container.style.left = '-10000px'
+            container.style.top = '0'
+            container.style.left = '0'
             container.style.width = '794px'
-            container.style.zIndex = '-1000'
+            container.style.visibility = 'hidden'
+            container.style.pointerEvents = 'none'
+            container.style.zIndex = '99999'
             document.body.appendChild(container)
 
             // 2. Clone the invoice
@@ -67,29 +76,34 @@ export function InvoiceActions() {
             clone.style.backgroundColor = '#ffffff'
             container.appendChild(clone)
 
-            // 3. FIX LOGO: Replace external img src with a base64 data URL
-            // html-to-image can't load cross-origin images (e.g. from Supabase storage),
-            // so we pre-fetch each image and inline it as a data URL.
+            // 3. Force all images to fully decode before capture
+            // On iOS, images may be in the DOM but not yet decoded into pixels.
+            // We wait for every image's decode() promise to resolve.
             const images = clone.querySelectorAll('img')
             await Promise.all(Array.from(images).map(async (img) => {
+                // If src is an external URL (shouldn't happen now — server inlines logo as data:)
+                // still do a best-effort client-side fetch as fallback
                 const src = img.getAttribute('src')
                 if (src && !src.startsWith('data:')) {
-                    const dataUrl = await imageUrlToDataUrl(src)
-                    if (dataUrl) {
-                        img.src = dataUrl
+                    const fetched = await imageUrlToDataUrl(src)
+                    if (fetched) {
+                        img.src = fetched
                         img.removeAttribute('srcset')
                     }
                 }
+                // Force browser to decode the image into pixels
+                try { await (img as any).decode() } catch { /* already decoded or no-op */ }
             }))
 
-            // 4. Brief wait for layout to settle
-            await new Promise(resolve => setTimeout(resolve, 400))
+            // 4. Wait for layout to settle — iOS needs more time
+            await new Promise(resolve => setTimeout(resolve, isIOS ? 800 : 400))
 
-            // 5. Capture as JPEG (much smaller than PNG — typically 5–10x smaller)
+            // 5. Capture as JPEG — lower pixelRatio on iOS to avoid canvas memory limits
+            const pixelRatio = isIOS ? 1.2 : 1.5
             const dataUrl = await toJpeg(clone, {
-                quality: 0.88,          // 88% quality — sharp text, small file
+                quality: 0.88,
                 cacheBust: true,
-                pixelRatio: 1.5,        // 1.5x is plenty sharp for A4 print
+                pixelRatio,
                 backgroundColor: '#ffffff',
                 height: clone.scrollHeight,
                 style: { overflow: 'visible' }
