@@ -72,8 +72,12 @@ export function InvoiceActions() {
             // so we pre-fetch each image and inline it as a data URL.
             const images = clone.querySelectorAll('img')
             await Promise.all(Array.from(images).map(async (img) => {
-                const src = img.getAttribute('src')
-                if (src && !src.startsWith('data:')) {
+                const pdfSrc = img.getAttribute('data-pdf-src')
+                const src = pdfSrc || img.getAttribute('src')
+                if (src?.startsWith('data:')) {
+                    img.src = src
+                    img.removeAttribute('srcset')
+                } else if (src) {
                     const dataUrl = await imageUrlToDataUrl(src)
                     if (dataUrl) {
                         img.src = dataUrl

@@ -107,8 +107,10 @@ export default async function CombinedReceiptPage({
                         <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xl overflow-hidden relative">
                             {(logoBase64 || logoUrl) ? (
                                 <img
-                                    src={logoBase64 || logoUrl!}
+                                    src={logoUrl || logoBase64!}
+                                    data-pdf-src={logoBase64 || logoUrl}
                                     alt="Logo"
+                                    crossOrigin="anonymous"
                                     className="absolute inset-0 w-full h-full object-contain p-1"
                                 />
                             ) : (
@@ -219,7 +221,7 @@ export default async function CombinedReceiptPage({
 
                         <div className="pt-4 flex justify-end">
                             <div className={`px-4 py-1 border-2 rounded uppercase text-xs font-bold tracking-widest rotate-[-10deg] ${isPaid
-                                    ? 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                    ? 'border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-300'
                                     : 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'
                                 }`}>
                                 {isPaid ? 'PAID IN FULL' : 'PARTIAL PAYMENT'}
