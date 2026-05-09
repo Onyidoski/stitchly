@@ -82,10 +82,22 @@ export function InvoiceActions() {
                 }
             }))
 
-            // 4. Brief wait for layout to settle
-            await new Promise(resolve => setTimeout(resolve, 400))
+            // 4. Wait for ALL images to be fully decoded & render-ready.
+            // On iOS Safari, even base64 data-URL images in cloned elements
+            // are not immediately available — img.decode() ensures the browser
+            // has fully rasterised the image before we capture.
+            await Promise.all(Array.from(images).map(async (img) => {
+                try {
+                    await img.decode()
+                } catch {
+                    // decode() can reject for broken/missing images — safe to ignore
+                }
+            }))
 
-            // 5. Capture as JPEG (much smaller than PNG — typically 5–10x smaller)
+            // 5. Brief extra wait for layout to settle after decode
+            await new Promise(resolve => setTimeout(resolve, 300))
+
+            // 6. Capture as JPEG (much smaller than PNG — typically 5–10x smaller)
             const dataUrl = await toJpeg(clone, {
                 quality: 0.88,          // 88% quality — sharp text, small file
                 cacheBust: true,
