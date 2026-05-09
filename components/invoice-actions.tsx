@@ -74,6 +74,9 @@ export function InvoiceActions() {
             clone.style.boxShadow = 'none'
             clone.style.height = 'auto'
             clone.style.backgroundColor = '#ffffff'
+            // CRITICAL: override inherited visibility:hidden from the container.
+            // Without this, html-to-image captures an invisible element → blank PDF.
+            clone.style.visibility = 'visible'
             container.appendChild(clone)
 
             // 3. Force all images to fully decode before capture
