@@ -40,130 +40,84 @@ export function InvoiceActions() {
 
             setDownloading(true)
 
-            // Detect iOS — must happen before any DOM manipulation
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-
-            // Force light mode for capture
+            // 0. Force light mode for capture if currently dark
             const wasDark = resolvedTheme === 'dark'
             await new Promise(resolve => setTimeout(resolve, 50))
             if (wasDark) {
                 document.documentElement.classList.remove('dark')
             }
 
-            let dataUrl: string
+            // 1. Hidden off-screen container at A4 width
+            const container = document.createElement('div')
+            container.style.position = 'fixed'
+            container.style.top = '-10000px'
+            container.style.left = '-10000px'
+            container.style.width = '794px'
+            container.style.zIndex = '-1000'
+            document.body.appendChild(container)
 
-            if (isIOS) {
-                // ─── iOS PATH ──────────────────────────────────────────────────
-                // On iOS Safari, off-screen clones don't get images painted.
-                // Capture the ORIGINAL element directly.
+            // 2. Clone the invoice
+            const clone = element.cloneNode(true) as HTMLElement
+            clone.style.transform = 'scale(1)'
+            clone.style.width = '100%'
+            clone.style.maxWidth = 'none'
+            clone.style.margin = '0'
+            clone.style.boxShadow = 'none'
+            clone.style.height = 'auto'
+            clone.style.backgroundColor = '#ffffff'
+            container.appendChild(clone)
 
-                // Preload every image by creating a new Image() and awaiting onload.
-                // img.decode() is unreliable on iOS Safari — it resolves before
-                // the image is actually rasterized. new Image().onload is reliable.
-                const originalImgs = element.querySelectorAll('img')
-                await Promise.all(Array.from(originalImgs).map((img) => {
-                    return new Promise<void>((resolve) => {
-                        const src = img.getAttribute('src')
-                        if (!src) { resolve(); return }
-
-                        // If the image is already fully loaded and has pixel data, skip
-                        if (img.complete && img.naturalWidth > 0) {
-                            resolve()
-                            return
-                        }
-
-                        // Create a throwaway Image to force the browser to decode
-                        const preloader = new Image()
-                        preloader.onload = () => resolve()
-                        preloader.onerror = () => resolve() // don't block on error
-                        preloader.src = src
-                    })
-                }))
-
-                // Wait for 2 animation frames to guarantee iOS has painted the images
-                await new Promise<void>(resolve => {
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => resolve())
-                    })
-                })
-
-                // Additional settle time for iOS compositing
-                await new Promise(resolve => setTimeout(resolve, 500))
-
-                dataUrl = await toJpeg(element, {
-                    quality: 0.95,
-                    cacheBust: true,
-                    pixelRatio: 1.5,
-                    backgroundColor: '#ffffff',
-                    height: element.scrollHeight,
-                    style: { overflow: 'visible', boxShadow: 'none' }
-                })
-
-            } else {
-                // ─── PC / DESKTOP PATH ─────────────────────────────────────────
-                const container = document.createElement('div')
-                container.style.position = 'fixed'
-                container.style.top = '-10000px'
-                container.style.left = '-10000px'
-                container.style.width = '794px'
-                container.style.zIndex = '-1'
-                container.style.pointerEvents = 'none'
-                document.body.appendChild(container)
-
-                const clone = element.cloneNode(true) as HTMLElement
-                clone.style.transform = 'scale(1)'
-                clone.style.width = '100%'
-                clone.style.maxWidth = 'none'
-                clone.style.margin = '0'
-                clone.style.boxShadow = 'none'
-                clone.style.height = 'auto'
-                clone.style.backgroundColor = '#ffffff'
-                container.appendChild(clone)
-
-                // Replace any remaining external image URLs with data URLs
-                const cloneImgs = clone.querySelectorAll('img')
-                await Promise.all(Array.from(cloneImgs).map(async (img) => {
-                    const src = img.getAttribute('src')
-                    if (src && !src.startsWith('data:')) {
-                        const fetched = await imageUrlToDataUrl(src)
-                        if (fetched) {
-                            img.src = fetched
-                            img.removeAttribute('srcset')
-                        }
+            // 3. FIX LOGO: Replace external img src with a base64 data URL
+            // html-to-image can't load cross-origin images (e.g. from Supabase storage),
+            // so we pre-fetch each image and inline it as a data URL.
+            const images = clone.querySelectorAll('img')
+            await Promise.all(Array.from(images).map(async (img) => {
+                const src = img.getAttribute('src')
+                if (src && !src.startsWith('data:')) {
+                    const dataUrl = await imageUrlToDataUrl(src)
+                    if (dataUrl) {
+                        img.src = dataUrl
+                        img.removeAttribute('srcset')
                     }
-                }))
+                }
+            }))
 
-                await new Promise(resolve => setTimeout(resolve, 500))
+            // 4. Brief wait for layout to settle
+            await new Promise(resolve => setTimeout(resolve, 400))
 
-                dataUrl = await toJpeg(clone, {
-                    quality: 0.95,
-                    cacheBust: true,
-                    pixelRatio: 2,
-                    backgroundColor: '#ffffff',
-                    height: clone.scrollHeight,
-                    style: { overflow: 'visible' }
-                })
+            // 5. Capture as JPEG (much smaller than PNG — typically 5–10x smaller)
+            const dataUrl = await toJpeg(clone, {
+                quality: 0.88,          // 88% quality — sharp text, small file
+                cacheBust: true,
+                pixelRatio: 1.5,        // 1.5x is plenty sharp for A4 print
+                backgroundColor: '#ffffff',
+                height: clone.scrollHeight,
+                style: { overflow: 'visible' }
+            })
 
-                document.body.removeChild(container)
-            }
+            // 6. Clean up DOM
+            document.body.removeChild(container)
 
-
-            // ─── BUILD PDF ────────────────────────────────────────────────────
+            // 7. Build PDF
             const tempPdf = new jsPDF('p', 'mm', 'a4')
-            const pdfWidth = tempPdf.internal.pageSize.getWidth()
-            const a4Height = tempPdf.internal.pageSize.getHeight()
+            const pdfWidth = tempPdf.internal.pageSize.getWidth()   // 210mm
+            const a4Height = tempPdf.internal.pageSize.getHeight()  // 297mm
 
             const imgProps = tempPdf.getImageProperties(dataUrl)
             const imgHeight = (imgProps.height * pdfWidth) / imgProps.width
             const pdfHeight = Math.max(a4Height, imgHeight)
 
-            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: [pdfWidth, pdfHeight] })
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: [pdfWidth, pdfHeight]
+            })
+
             pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, imgHeight)
             pdf.save('invoice.pdf')
             toast.success("Invoice saved successfully")
 
-            // Restore dark mode
+            // 8. Restore dark mode if needed
             if (wasDark) {
                 document.documentElement.classList.add('dark')
             }
@@ -174,12 +128,12 @@ export function InvoiceActions() {
             console.error("PDF generation failed", error)
             toast.error("Failed to generate PDF.")
             setDownloading(false)
+
             if (resolvedTheme === 'dark') {
                 document.documentElement.classList.add('dark')
             }
         }
     }
-
 
     return (
         <div className="max-w-3xl mx-auto mb-6 px-4 flex items-center justify-between print:hidden">
