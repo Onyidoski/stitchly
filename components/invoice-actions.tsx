@@ -40,101 +40,110 @@ export function InvoiceActions() {
 
             setDownloading(true)
 
-            // 0. Force light mode for capture if currently dark
+            // Detect iOS — must happen before any DOM manipulation
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+            // Force light mode for capture
             const wasDark = resolvedTheme === 'dark'
             await new Promise(resolve => setTimeout(resolve, 50))
             if (wasDark) {
                 document.documentElement.classList.remove('dark')
             }
 
-            // Detect iOS Safari — it refuses to paint elements at negative coords
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+            let dataUrl: string
 
-            // 1. Hidden container at A4 width
-            // KEY iOS FIX: use visibility:hidden at top:0 instead of top:-10000px.
-            // iOS Safari skips painting/decoding images in elements far outside the viewport.
-            // visibility:hidden keeps it in the render tree so images are decoded.
-            const container = document.createElement('div')
-            container.style.position = 'fixed'
-            container.style.top = '0'
-            container.style.left = '0'
-            container.style.width = '794px'
-            container.style.visibility = 'hidden'
-            container.style.pointerEvents = 'none'
-            container.style.zIndex = '99999'
-            document.body.appendChild(container)
+            if (isIOS) {
+                // ─── iOS PATH ──────────────────────────────────────────────────
+                // On iOS Safari, off-screen elements (even visibility:hidden ones)
+                // show through or cause blank captures due to compositing quirks.
+                // Instead, capture the ORIGINAL element — it's already rendered,
+                // already in the viewport, and images are already decoded.
 
-            // 2. Clone the invoice
-            const clone = element.cloneNode(true) as HTMLElement
-            clone.style.transform = 'scale(1)'
-            clone.style.width = '100%'
-            clone.style.maxWidth = 'none'
-            clone.style.margin = '0'
-            clone.style.boxShadow = 'none'
-            clone.style.height = 'auto'
-            clone.style.backgroundColor = '#ffffff'
-            // CRITICAL: override inherited visibility:hidden from the container.
-            // Without this, html-to-image captures an invisible element → blank PDF.
-            clone.style.visibility = 'visible'
-            container.appendChild(clone)
+                // Pre-warm: force all images in the original element to decode
+                const originalImgs = element.querySelectorAll('img')
+                await Promise.all(Array.from(originalImgs).map(async (img) => {
+                    try { await (img as any).decode() } catch { }
+                }))
 
-            // 3. Force all images to fully decode before capture
-            // On iOS, images may be in the DOM but not yet decoded into pixels.
-            // We wait for every image's decode() promise to resolve.
-            const images = clone.querySelectorAll('img')
-            await Promise.all(Array.from(images).map(async (img) => {
-                // If src is an external URL (shouldn't happen now — server inlines logo as data:)
-                // still do a best-effort client-side fetch as fallback
-                const src = img.getAttribute('src')
-                if (src && !src.startsWith('data:')) {
-                    const fetched = await imageUrlToDataUrl(src)
-                    if (fetched) {
-                        img.src = fetched
-                        img.removeAttribute('srcset')
+                // Short settle time
+                await new Promise(resolve => setTimeout(resolve, 300))
+
+                dataUrl = await toJpeg(element, {
+                    quality: 0.88,
+                    cacheBust: true,
+                    pixelRatio: 1.2,        // lower on iOS to stay within canvas memory limit
+                    backgroundColor: '#ffffff',
+                    height: element.scrollHeight,
+                    style: { overflow: 'visible', boxShadow: 'none' }
+                })
+
+            } else {
+                // ─── PC / DESKTOP PATH ─────────────────────────────────────────
+                // Clone into a fixed-width A4 container off-screen.
+                // Chrome/Edge paints off-screen fixed elements, so this is safe.
+                const container = document.createElement('div')
+                container.style.position = 'fixed'
+                container.style.top = '-10000px'
+                container.style.left = '-10000px'
+                container.style.width = '794px'   // A4 at 96 DPI
+                container.style.zIndex = '-1'
+                container.style.pointerEvents = 'none'
+                document.body.appendChild(container)
+
+                const clone = element.cloneNode(true) as HTMLElement
+                clone.style.transform = 'scale(1)'
+                clone.style.width = '100%'
+                clone.style.maxWidth = 'none'
+                clone.style.margin = '0'
+                clone.style.boxShadow = 'none'
+                clone.style.height = 'auto'
+                clone.style.backgroundColor = '#ffffff'
+                container.appendChild(clone)
+
+                // Replace any remaining external image URLs with data URLs (fallback)
+                const cloneImgs = clone.querySelectorAll('img')
+                await Promise.all(Array.from(cloneImgs).map(async (img) => {
+                    const src = img.getAttribute('src')
+                    if (src && !src.startsWith('data:')) {
+                        const fetched = await imageUrlToDataUrl(src)
+                        if (fetched) {
+                            img.src = fetched
+                            img.removeAttribute('srcset')
+                        }
                     }
-                }
-                // Force browser to decode the image into pixels
-                try { await (img as any).decode() } catch { /* already decoded or no-op */ }
-            }))
+                    try { await (img as any).decode() } catch { }
+                }))
 
-            // 4. Wait for layout to settle — iOS needs more time
-            await new Promise(resolve => setTimeout(resolve, isIOS ? 800 : 400))
+                await new Promise(resolve => setTimeout(resolve, 400))
 
-            // 5. Capture as JPEG — lower pixelRatio on iOS to avoid canvas memory limits
-            const pixelRatio = isIOS ? 1.2 : 1.5
-            const dataUrl = await toJpeg(clone, {
-                quality: 0.88,
-                cacheBust: true,
-                pixelRatio,
-                backgroundColor: '#ffffff',
-                height: clone.scrollHeight,
-                style: { overflow: 'visible' }
-            })
+                dataUrl = await toJpeg(clone, {
+                    quality: 0.88,
+                    cacheBust: true,
+                    pixelRatio: 1.5,
+                    backgroundColor: '#ffffff',
+                    height: clone.scrollHeight,
+                    style: { overflow: 'visible' }
+                })
 
-            // 6. Clean up DOM
-            document.body.removeChild(container)
+                document.body.removeChild(container)
+            }
 
-            // 7. Build PDF
+            // ─── BUILD PDF ────────────────────────────────────────────────────
             const tempPdf = new jsPDF('p', 'mm', 'a4')
-            const pdfWidth = tempPdf.internal.pageSize.getWidth()   // 210mm
-            const a4Height = tempPdf.internal.pageSize.getHeight()  // 297mm
+            const pdfWidth = tempPdf.internal.pageSize.getWidth()
+            const a4Height = tempPdf.internal.pageSize.getHeight()
 
             const imgProps = tempPdf.getImageProperties(dataUrl)
             const imgHeight = (imgProps.height * pdfWidth) / imgProps.width
             const pdfHeight = Math.max(a4Height, imgHeight)
 
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: [pdfWidth, pdfHeight]
-            })
-
+            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: [pdfWidth, pdfHeight] })
             pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, imgHeight)
             pdf.save('invoice.pdf')
             toast.success("Invoice saved successfully")
 
-            // 8. Restore dark mode if needed
+            // Restore dark mode
             if (wasDark) {
                 document.documentElement.classList.add('dark')
             }
@@ -145,12 +154,12 @@ export function InvoiceActions() {
             console.error("PDF generation failed", error)
             toast.error("Failed to generate PDF.")
             setDownloading(false)
-
             if (resolvedTheme === 'dark') {
                 document.documentElement.classList.add('dark')
             }
         }
     }
+
 
     return (
         <div className="max-w-3xl mx-auto mb-6 px-4 flex items-center justify-between print:hidden">
