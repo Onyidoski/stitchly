@@ -28,7 +28,7 @@ export default async function InvoiceDetailsPage({
     const businessName = tenant?.business_name || 'Fashion Brand'
     const logoUrl = tenant?.logo_url || null
 
-    const balance = order.total_amount - (order.paid_amount || 0)
+    const balance = (order.total_amount || 0) - (order.paid_amount || 0)
     const isPaid = balance <= 0
     const invoiceDate = new Date(order.created_at).toLocaleDateString()
     const dueDate = new Date(order.delivery_date).toLocaleDateString()
@@ -123,7 +123,7 @@ export default async function InvoiceDetailsPage({
                                         </p>
                                     </td>
                                     <td className="px-4 py-4 text-center">{order.quantity}</td>
-                                    <td className="px-4 py-4 text-right">₦{order.total_amount.toLocaleString()}</td>
+                                    <td className="px-4 py-4 text-right">₦{(order.total_amount || 0).toLocaleString()}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -135,7 +135,7 @@ export default async function InvoiceDetailsPage({
                     <div className="w-full sm:w-64 space-y-3">
                         <div className="flex justify-between text-sm text-muted-foreground">
                             <span>Subtotal</span>
-                            <span>₦{order.total_amount.toLocaleString()}</span>
+                            <span>₦{(order.total_amount || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                             <span>Paid</span>
