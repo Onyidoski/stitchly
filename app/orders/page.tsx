@@ -59,7 +59,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                 {/* FIX: Set defaultValue to the tab from URL */}
                 <Tabs defaultValue={currentTab} className="space-y-4">
                     {/* FIX: Added w-fit to prevent background stretching */}
-                    <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap h-auto justify-start">
+                    <TabsList className="bg-card p-1 rounded-xl w-fit flex-wrap h-auto justify-start">
                         <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none">Active ({activeOrders.length})</TabsTrigger>
                         <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none">Completed ({completedOrders.length})</TabsTrigger>
                         <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1 sm:flex-none">All ({allOrders.length})</TabsTrigger>

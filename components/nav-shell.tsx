@@ -14,6 +14,7 @@ import {
   CalendarDays,
   BarChart3,
 } from "lucide-react"
+import { PushNotificationToggle } from "@/components/push-notification-toggle"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import {
@@ -233,6 +234,9 @@ export default function NavShell({
           </nav>
         </div>
 
+        <div className="px-4 pb-4">
+          <PushNotificationToggle />
+        </div>
         <UserProfileSection
           businessName={businessName}
           userEmail={userEmail}
@@ -298,6 +302,9 @@ export default function NavShell({
                   </nav>
                 </div>
 
+                <div className="px-4 pb-4">
+                  <PushNotificationToggle />
+                </div>
                 <UserProfileSection
                   businessName={businessName}
                   userEmail={userEmail}

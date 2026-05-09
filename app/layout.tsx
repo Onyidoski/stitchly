@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { IosInstallPrompt } from "@/components/ios-install-prompt";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/service-worker-register"; // [!code ++] Import the SW register component
+import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -235,6 +236,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
         >
+            <NextTopLoader color="#2563eb" showSpinner={false} />
             <ServiceWorkerRegister /> {/* [!code ++] Registers the SW to ensure PWA installation */}
             {children}
             <IosInstallPrompt />

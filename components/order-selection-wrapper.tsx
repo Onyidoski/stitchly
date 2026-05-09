@@ -116,7 +116,7 @@ export function OrderSelectionWrapper({
                                     : 'hover:shadow-sm'
                             }`}
                         >
-                            <CardHeader className="bg-muted/30 pb-3">
+                            <CardHeader className="bg-muted/30 px-5 pt-5 pb-4 border-b border-border/40">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-start gap-3 flex-1">
                                         {/* Checkbox */}
@@ -185,15 +185,13 @@ export function OrderSelectionWrapper({
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center py-6 rounded-xl border border-dashed border-muted-foreground/20 bg-muted/30">
-                                        <div className="flex flex-col items-center gap-1.5 text-muted-foreground/50">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
-                                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                                                <circle cx="9" cy="9" r="2"/>
-                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                                            </svg>
-                                            <span className="text-xs font-medium">No style reference</span>
-                                        </div>
+                                    <div className="h-48 w-48 shrink-0 rounded-xl border border-muted/60 bg-gradient-to-br from-muted/10 to-muted/30 flex flex-col items-center justify-center gap-3 text-muted-foreground/50 shadow-inner">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 opacity-50">
+                                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                                            <circle cx="9" cy="9" r="2"/>
+                                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                        </svg>
+                                        <span className="text-[11px] font-semibold tracking-wider uppercase">No Reference</span>
                                     </div>
                                 )}
 

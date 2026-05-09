@@ -14,10 +14,20 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Not logged in' }, { status: 401 })
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.tenant_id) {
+    return NextResponse.json({ error: 'No tenant found' }, { status: 400 })
+  }
+
   const { data: subscription } = await supabase
     .from('push_subscriptions') //
     .select('*')
-    .eq('user_id', user.id)
+    .eq('tenant_id', profile.tenant_id)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()

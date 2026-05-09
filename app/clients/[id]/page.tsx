@@ -82,14 +82,14 @@ export default async function ClientDetailsPage({ params }: PageProps) {
         <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount || 0}>
 
             {/* HEADER */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarFallback className="text-xl">{client.name[0].toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight">{client.name}</h2>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2.5">
                             {client.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {client.phone}</span>}
                             {client.gender && <span className="flex items-center gap-1 capitalize"><User className="h-3 w-3" /> {client.gender}</span>}
                         </div>
