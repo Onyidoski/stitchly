@@ -169,12 +169,16 @@ export default async function InvoiceDetailsPage({
                                 Account No: <span className="font-medium text-foreground">{tenant?.account_number || 'Not set'}</span>
                             </p>
                         </div>
-                        <div className="md:text-right">
-                            <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Terms & Notes</h4>
-                            <p className="text-xs text-muted-foreground">
-                                Please ensure payment is made before the delivery date.<br />
-                                No refunds after fabric has been cut.
-                            </p>
+                        <div>
+                            <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Terms & Conditions</h4>
+                            <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                                <li>Payment confirms and validates your order.</li>
+                                <li>A 70% deposit is required before work or production can commence.</li>
+                                <li>The outstanding balance must be paid in full upon final fitting and before pickup.</li>
+                                <li>Full payment is required before any order can be dispatched or delivered.</li>
+                                <li>Orders may be collected via pickup or delivered at the client’s expense.</li>
+                                <li>Once a bill or invoice has been created and finalized, its style or details can no longer be modified.</li>
+                            </ul>
                             <p className="mt-4 font-handwriting text-xl text-foreground">Thank You!</p>
                         </div>
                     </div>
