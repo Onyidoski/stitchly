@@ -59,12 +59,14 @@ export default async function ClientDetailsPage({ params }: PageProps) {
         .from('measurements')
         .select('*')
         .eq('client_id', id)
+        .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
 
     const { data: orders } = await supabase
         .from('orders')
         .select('*')
         .eq('client_id', id)
+        .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
 
     // Helper to render simple measurement blocks

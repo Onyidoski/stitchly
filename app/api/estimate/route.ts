@@ -2,14 +2,29 @@ import { generateObject } from 'ai'
 import { google } from '@ai-sdk/google'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
+
+const estimateRequestSchema = z.object({
+  description: z.string().trim().min(1).max(2000),
+  measurements: z.record(z.string(), z.unknown()).optional(),
+})
 
 export async function POST(req: Request) {
   try {
-    const { description, measurements } = await req.json()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!description) {
-      return NextResponse.json({ error: 'Description is required' }, { status: 400 })
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const parsed = estimateRequestSchema.safeParse(await req.json())
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid estimate request' }, { status: 400 })
+    }
+
+    const { description, measurements } = parsed.data
 
     const bust = measurements?.bust ?? measurements?.chest ?? 'N/A'
     const waist = measurements?.waist ?? 'N/A'

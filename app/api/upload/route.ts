@@ -2,6 +2,16 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { z } from "zod"
+
+const MAX_UPLOAD_BYTES = 1_000_000
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"])
+
+const uploadRequestSchema = z.object({
+  filename: z.string().min(1).max(200),
+  contentType: z.string().min(1),
+  size: z.number().int().positive().max(MAX_UPLOAD_BYTES).optional(),
+})
 
 const R2 = new S3Client({
   region: "auto",
@@ -19,11 +29,21 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
-    const { filename, contentType } = await request.json()
+    const parsed = uploadRequestSchema.safeParse(await request.json())
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid upload request" }, { status: 400 })
+    }
+
+    const { filename, contentType } = parsed.data
+
+    if (!ALLOWED_IMAGE_TYPES.has(contentType)) {
+      return NextResponse.json({ error: "Unsupported file type" }, { status: 400 })
+    }
     
     // 2. Generate a unique file path: user_id/random_id-filename
     const uniqueId = crypto.randomUUID()
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "")
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "") || "image"
     const key = `${user.id}/${uniqueId}-${sanitizedFilename}`
 
     // 3. Generate Signed URL

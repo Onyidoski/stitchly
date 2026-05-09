@@ -22,11 +22,23 @@ export default async function ReceiptDetailsPage({
 }) {
     const { id } = await params
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return <div>Please log in</div>
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.tenant_id) return <div>Business profile not found</div>
 
     const { data: order } = await supabase
         .from('orders')
         .select('*, clients(*)')
         .eq('id', id)
+        .eq('tenant_id', profile.tenant_id)
         .single()
 
     if (!order) return <div>Receipt not found</div>
@@ -35,7 +47,7 @@ export default async function ReceiptDetailsPage({
     const { data: tenant } = await supabase
         .from('tenants')
         .select('*')
-        .eq('id', order.tenant_id)
+        .eq('id', profile.tenant_id)
         .single()
 
     const businessName = tenant?.business_name || 'Fashion Brand'

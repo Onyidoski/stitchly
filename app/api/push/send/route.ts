@@ -4,7 +4,7 @@ import webpush from 'web-push'
 
 // Initialize web-push
 webpush.setVapidDetails(
-    'mailto:test@example.com', // Replace with your email in production
+    'mailto:admin@stitchly.com',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
     process.env.VAPID_PRIVATE_KEY || ''
 )
@@ -14,9 +14,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 export async function GET(request: Request) {
-    // Basic security: ensure this endpoint is only called by Vercel Cron in production
     const authHeader = request.headers.get('authorization');
-    if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return new Response('Unauthorized', { status: 401 });
     }
 
@@ -102,10 +101,13 @@ export async function GET(request: Request) {
                         JSON.stringify({ title, body })
                     )
                     sentCount++
-                } catch (err: any) {
-                    console.error('Failed to send push to endpoint:', sub.endpoint, err.statusCode)
+                } catch (err: unknown) {
+                    const statusCode = typeof err === 'object' && err !== null && 'statusCode' in err
+                        ? Number(err.statusCode)
+                        : undefined
+                    console.error('Failed to send push to endpoint:', sub.endpoint, statusCode)
                     // If subscription is invalid/expired (410 or 404), delete it from DB
-                    if (err.statusCode === 410 || err.statusCode === 404) {
+                    if (statusCode === 410 || statusCode === 404) {
                         await supabase.from('push_subscriptions').delete().eq('id', sub.id)
                     }
                 }
@@ -116,8 +118,8 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ success: true, sent: sentCount })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Cron Error:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Cron Error' }, { status: 500 })
     }
 }

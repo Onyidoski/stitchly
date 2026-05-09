@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/utils/supabase/client'
 
 // Helper to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -26,16 +25,8 @@ export function NotificationManager() {
   const [isSupported, setIsSupported] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true)
-      registerServiceWorker()
-    }
-  }, [])
-
-  async function registerServiceWorker() {
+  const registerServiceWorker = useCallback(async () => {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
@@ -46,7 +37,14 @@ export function NotificationManager() {
     } catch (error) {
       console.error("Service Worker registration failed:", error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      setIsSupported(true)
+      registerServiceWorker()
+    }
+  }, [registerServiceWorker])
 
   async function subscribeToPush() {
     setLoading(true)
@@ -74,17 +72,15 @@ export function NotificationManager() {
   }
 
   async function saveSubscriptionToDb(sub: PushSubscription) {
-    const { endpoint, keys } = sub.toJSON()
-    const { data: { user } } = await supabase.auth.getUser()
+    const response = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub),
+    })
 
-    if (!user || !keys) return
-
-    await supabase.from('push_subscriptions').upsert({
-      user_id: user.id,
-      endpoint: endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth
-    }, { onConflict: 'endpoint' })
+    if (!response.ok) {
+      throw new Error('Failed to save push subscription')
+    }
   }
 
   if (!isSupported) {

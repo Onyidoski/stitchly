@@ -1,5 +1,4 @@
 import { createClient } from '@/utils/supabase/server'
-import Image from 'next/image'
 import { InvoiceActions } from '@/components/invoice-actions'
 import { redirect } from 'next/navigation'
 
@@ -39,12 +38,24 @@ export default async function CombinedInvoicePage({
     }
 
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return <div>Please log in</div>
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.tenant_id) return <div>Business profile not found</div>
 
     // Fetch client
     const { data: client } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
+        .eq('tenant_id', profile.tenant_id)
         .single()
 
     if (!client) return <div>Client not found</div>
@@ -55,6 +66,7 @@ export default async function CombinedInvoicePage({
         .select('*')
         .in('id', orderIds)
         .eq('client_id', clientId)
+        .eq('tenant_id', profile.tenant_id)
         .order('created_at', { ascending: false })
 
     if (!orders || orders.length === 0) return <div>No orders found</div>
@@ -63,7 +75,7 @@ export default async function CombinedInvoicePage({
     const { data: tenant } = await supabase
         .from('tenants')
         .select('*')
-        .eq('id', orders[0].tenant_id)
+        .eq('id', profile.tenant_id)
         .single()
 
     const businessName = tenant?.business_name || 'Fashion Brand'
@@ -84,8 +96,7 @@ export default async function CombinedInvoicePage({
     const dueDates = orders.map(o => new Date(o.delivery_date).getTime())
     const earliestDue = new Date(Math.min(...dueDates)).toLocaleDateString()
 
-    // Generate a combined invoice number from client ID + date
-    const invoiceNumber = `C-${clientId.slice(0, 4).toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`
+    const invoiceNumber = `C-${clientId.slice(0, 4).toUpperCase()}${orders[0].id.slice(0, 4).toUpperCase()}`
 
     return (
         <div className="min-h-screen bg-muted/50 p-4 md:p-8 font-sans">

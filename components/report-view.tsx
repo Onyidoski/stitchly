@@ -166,7 +166,8 @@ export function ReportView({
             if (imgH <= pdfH) {
                 pdf.addImage(dataUrl, 'PNG', 0, 0, pdfW, imgH)
             } else {
-                let left = imgH, pos = 0
+                let left = imgH
+                const pos = 0
                 pdf.addImage(dataUrl, 'PNG', 0, pos, pdfW, imgH)
                 left -= pdfH
                 while (left >= 0) {

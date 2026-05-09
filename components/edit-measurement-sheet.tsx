@@ -21,6 +21,24 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
+const measurementFields = [
+  "round_shoulder", "round_armhole", "round_upper_bust", "shoulder", "bust_span",
+  "bust", "bust_point", "underbust", "underbust_point", "waist", "waist_point",
+  "hip", "hip_point", "back_length", "knee_length", "full_length", "blouse_length",
+  "sleeve_length_short", "round_sleeve_short", "sleeve_length_elbow", "round_sleeve_elbow",
+  "sleeve_length_3_4", "round_sleeve_3_4", "sleeve_length_full", "round_sleeve_full",
+  "trouser_waist", "trouser_hips", "trouser_hip_point", "thigh", "round_knee",
+  "ankle", "trouser_length", "pallazo_length"
+]
+
+const getOptionalFormValue = (formData: FormData, key: string) => {
+  const value = formData.get(key)
+  if (typeof value !== "string") return null
+
+  const trimmed = value.trim()
+  return trimmed === "" ? null : trimmed
+}
+
 // [FIX] Updated styling to match the "Add" sheet (h-9 for better touch targets)
 const MeasurementField = ({ id, label, measurement }: { id: string, label: string, measurement: any }) => (
   <div className="space-y-2">
@@ -50,37 +68,52 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
 
     const formData = new FormData(e.currentTarget)
 
-    const updates: any = {
-      notes: formData.get("notes"),
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      toast.error("Please log in again to update measurements")
+      setLoading(false)
+      return
     }
 
-    const fields = [
-      "round_shoulder", "round_armhole", "round_upper_bust", "shoulder", "bust_span",
-      "bust", "bust_point", "underbust", "underbust_point", "waist", "waist_point",
-      "hip", "hip_point", "back_length", "knee_length", "full_length", "blouse_length",
-      "sleeve_length_short", "round_sleeve_short", "sleeve_length_elbow", "round_sleeve_elbow",
-      "sleeve_length_3_4", "round_sleeve_3_4", "sleeve_length_full", "round_sleeve_full",
-      "trouser_waist", "trouser_hips", "trouser_hip_point", "thigh", "round_knee",
-      "ankle", "trouser_length", "pallazo_length"
-    ]
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .single()
 
-    fields.forEach(field => {
-      const val = formData.get(field)
-      if (val) updates[field] = val
+    if (!profile?.tenant_id) {
+      toast.error("Business profile not found")
+      setLoading(false)
+      return
+    }
+
+    const updates: Record<string, string | null> = {
+      tenant_id: profile.tenant_id,
+      notes: getOptionalFormValue(formData, "notes"),
+    }
+
+    measurementFields.forEach(field => {
+      updates[field] = getOptionalFormValue(formData, field)
     })
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('measurements')
       .update(updates)
       .eq('id', measurement.id)
+      .eq('tenant_id', profile.tenant_id)
+      .select('id')
+      .maybeSingle()
 
-    if (!error) {
+    if (error) {
+      console.error(error)
+      toast.error("Failed to update measurements")
+    } else if (!data) {
+      toast.error("Measurement was not updated. Please refresh and try again.")
+    } else {
       toast.success("Measurements updated!")
       setOpen(false)
       router.refresh()
-    } else {
-      console.error(error)
-      toast.error("Failed to update measurements")
     }
     setLoading(false)
   }
@@ -92,6 +125,7 @@ export function EditMeasurementSheet({ measurement }: { measurement: any }) {
       .from('measurements')
       .delete()
       .eq('id', measurement.id)
+      .eq('tenant_id', measurement.tenant_id)
 
     if (!error) {
       toast.success("Measurement deleted")

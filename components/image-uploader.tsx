@@ -37,7 +37,8 @@ export function ImageUploader({ onUploadComplete }: ImageUploaderProps) {
           method: 'POST',
           body: JSON.stringify({
             filename: compressedFile.name,
-            contentType: compressedFile.type
+            contentType: compressedFile.type,
+            size: compressedFile.size
           })
         })
         

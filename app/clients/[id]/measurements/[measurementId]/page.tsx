@@ -1,6 +1,17 @@
 import { createClient } from '@/utils/supabase/server'
 import Image from 'next/image'
 import { DocumentActions } from '@/components/document-actions'
+import type { ReactNode } from 'react'
+
+function MeasurementRow({ label, value }: { label: string; value: ReactNode }) {
+    if (!value && value !== 0) return null
+    return (
+        <div className="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
+            <span className="text-sm text-gray-500">{label}</span>
+            <span className="text-sm font-semibold text-gray-900">{value}</span>
+        </div>
+    )
+}
 
 export default async function MeasurementDocumentPage({
     params,
@@ -9,46 +20,47 @@ export default async function MeasurementDocumentPage({
 }) {
     const { id: clientId, measurementId } = await params
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // Fetch measurement
-    const { data: measurement } = await supabase
-        .from('measurements')
-        .select('*')
-        .eq('id', measurementId)
+    if (!user) return <div>Please log in</div>
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
         .single()
 
-    if (!measurement) return <div>Measurement not found</div>
+    if (!profile?.tenant_id) return <div>Business profile not found</div>
 
-    // Fetch client
     const { data: client } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
+        .eq('tenant_id', profile.tenant_id)
         .single()
 
     if (!client) return <div>Client not found</div>
+
+    const { data: measurement } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('id', measurementId)
+        .eq('client_id', clientId)
+        .eq('tenant_id', profile.tenant_id)
+        .single()
+
+    if (!measurement) return <div>Measurement not found</div>
 
     // Fetch tenant (for branding)
     const { data: tenant } = await supabase
         .from('tenants')
         .select('*')
-        .eq('id', client.tenant_id)
+        .eq('id', profile.tenant_id)
         .single()
 
     const businessName = tenant?.business_name || 'Fashion Brand'
     const logoUrl = tenant?.logo_url || null
     const m = measurement
-
-    // Helper: measurement block renderer
-    const MRow = ({ label, value }: { label: string; value: any }) => {
-        if (!value && value !== 0) return null
-        return (
-            <div className="flex justify-between items-center py-2 border-b border-dashed border-gray-200">
-                <span className="text-sm text-gray-500">{label}</span>
-                <span className="text-sm font-semibold text-gray-900">{value}</span>
-            </div>
-        )
-    }
 
     // Collect sleeve data
     const sleeves = [
@@ -134,23 +146,23 @@ export default async function MeasurementDocumentPage({
                         <div className="h-0.5 w-12 bg-indigo-600 rounded-full"></div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-                        <MRow label="Round Shoulder" value={m.round_shoulder} />
-                        <MRow label="Round Armhole" value={m.round_armhole} />
-                        <MRow label="Upper Bust" value={m.round_upper_bust} />
-                        <MRow label="Shoulder" value={m.shoulder} />
-                        <MRow label="Bust Span" value={m.bust_span} />
-                        <MRow label="Bust" value={m.bust} />
-                        <MRow label="Bust Point" value={m.bust_point} />
-                        <MRow label="Underbust" value={m.underbust} />
-                        <MRow label="Underbust Point" value={m.underbust_point} />
-                        <MRow label="Waist" value={m.waist} />
-                        <MRow label="Waist Point" value={m.waist_point} />
-                        <MRow label="Hips" value={m.hip} />
-                        <MRow label="Hip Point" value={m.hip_point} />
-                        <MRow label="Back Length" value={m.back_length} />
-                        <MRow label="Knee Length" value={m.knee_length} />
-                        <MRow label="Blouse Length" value={m.blouse_length} />
-                        <MRow label="Full Length" value={m.full_length} />
+                        <MeasurementRow label="Round Shoulder" value={m.round_shoulder} />
+                        <MeasurementRow label="Round Armhole" value={m.round_armhole} />
+                        <MeasurementRow label="Upper Bust" value={m.round_upper_bust} />
+                        <MeasurementRow label="Shoulder" value={m.shoulder} />
+                        <MeasurementRow label="Bust Span" value={m.bust_span} />
+                        <MeasurementRow label="Bust" value={m.bust} />
+                        <MeasurementRow label="Bust Point" value={m.bust_point} />
+                        <MeasurementRow label="Underbust" value={m.underbust} />
+                        <MeasurementRow label="Underbust Point" value={m.underbust_point} />
+                        <MeasurementRow label="Waist" value={m.waist} />
+                        <MeasurementRow label="Waist Point" value={m.waist_point} />
+                        <MeasurementRow label="Hips" value={m.hip} />
+                        <MeasurementRow label="Hip Point" value={m.hip_point} />
+                        <MeasurementRow label="Back Length" value={m.back_length} />
+                        <MeasurementRow label="Knee Length" value={m.knee_length} />
+                        <MeasurementRow label="Blouse Length" value={m.blouse_length} />
+                        <MeasurementRow label="Full Length" value={m.full_length} />
                     </div>
                 </div>
 
@@ -191,14 +203,14 @@ export default async function MeasurementDocumentPage({
                         <div className="h-0.5 w-12 bg-indigo-600 rounded-full"></div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-                        <MRow label="Trouser Waist" value={m.trouser_waist} />
-                        <MRow label="Trouser Hips" value={m.trouser_hips} />
-                        <MRow label="Hip Point" value={m.trouser_hip_point} />
-                        <MRow label="Thigh" value={m.thigh} />
-                        <MRow label="Round Knee" value={m.round_knee} />
-                        <MRow label="Ankle" value={m.ankle} />
-                        <MRow label="Trouser Length" value={m.trouser_length} />
-                        <MRow label="Pallazo Length" value={m.pallazo_length} />
+                        <MeasurementRow label="Trouser Waist" value={m.trouser_waist} />
+                        <MeasurementRow label="Trouser Hips" value={m.trouser_hips} />
+                        <MeasurementRow label="Hip Point" value={m.trouser_hip_point} />
+                        <MeasurementRow label="Thigh" value={m.thigh} />
+                        <MeasurementRow label="Round Knee" value={m.round_knee} />
+                        <MeasurementRow label="Ankle" value={m.ankle} />
+                        <MeasurementRow label="Trouser Length" value={m.trouser_length} />
+                        <MeasurementRow label="Pallazo Length" value={m.pallazo_length} />
                     </div>
                 </div>
 

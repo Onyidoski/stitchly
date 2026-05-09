@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     let response = NextResponse.next({
         request: {
             headers: request.headers,
@@ -17,17 +17,14 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    // 1. Update the request cookies (so they are available within the request)
-                    cookiesToSet.forEach(({ name, value, options }) => 
+                    cookiesToSet.forEach(({ name, value }) =>
                         request.cookies.set(name, value)
                     )
-                    
-                    // 2. Refresh the response object to include updated request headers
+
                     response = NextResponse.next({
                         request,
                     })
-                    
-                    // 3. Set the cookies on the response (so they are sent to the browser)
+
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     )
@@ -51,7 +48,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        // Exclude public assets that must be served directly, including the PWA service worker.
-        '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }

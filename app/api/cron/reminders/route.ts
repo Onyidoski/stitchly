@@ -5,7 +5,12 @@ import webpush from 'web-push'
 // Prevent this route from being cached
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const supabase = createAdminClient()
 
   // 1. Calculate "Tomorrow" (YYYY-MM-DD)
@@ -65,10 +70,11 @@ export async function GET() {
         // Send notification to all of this user's devices
         for (const sub of subscriptions) {
             try {
+                const client = order.clients as { name?: string } | { name?: string }[] | null
+                const clientName = Array.isArray(client) ? client[0]?.name : client?.name
                 const payload = JSON.stringify({
                     title: 'Order Due Tomorrow!',
-                    // @ts-ignore
-                    body: `Order for ${order.clients?.name || 'Client'} is due on ${order.delivery_date}.`,
+                    body: `Order for ${clientName || 'Client'} is due on ${order.delivery_date}.`,
                     url: `/orders`
                 })
 
@@ -78,9 +84,12 @@ export async function GET() {
                 }, payload)
                 
                 sentCount++
-            } catch (err: any) {
+            } catch (err: unknown) {
                 // If 410 Gone, the subscription is invalid (user blocked/uninstalled)
-                if (err.statusCode === 410) {
+                const statusCode = typeof err === 'object' && err !== null && 'statusCode' in err
+                    ? Number(err.statusCode)
+                    : undefined
+                if (statusCode === 410) {
                     await supabase.from('push_subscriptions').delete().eq('id', sub.id)
                 }
                 console.error('Failed to send push:', err)
@@ -91,8 +100,8 @@ export async function GET() {
 
     return NextResponse.json({ success: true, sent: sentCount, message: `Sent ${sentCount} reminders` })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cron job failed:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Cron job failed' }, { status: 500 })
   }
 }

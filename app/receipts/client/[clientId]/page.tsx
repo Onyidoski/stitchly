@@ -37,12 +37,24 @@ export default async function CombinedReceiptPage({
     }
 
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return <div>Please log in</div>
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.tenant_id) return <div>Business profile not found</div>
 
     // Fetch client
     const { data: client } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
+        .eq('tenant_id', profile.tenant_id)
         .single()
 
     if (!client) return <div>Client not found</div>
@@ -53,6 +65,7 @@ export default async function CombinedReceiptPage({
         .select('*')
         .in('id', orderIds)
         .eq('client_id', clientId)
+        .eq('tenant_id', profile.tenant_id)
         .order('created_at', { ascending: false })
 
     if (!orders || orders.length === 0) return <div>No orders found</div>
@@ -61,7 +74,7 @@ export default async function CombinedReceiptPage({
     const { data: tenant } = await supabase
         .from('tenants')
         .select('*')
-        .eq('id', orders[0].tenant_id)
+        .eq('id', profile.tenant_id)
         .single()
 
     const businessName = tenant?.business_name || 'Fashion Brand'
@@ -76,8 +89,7 @@ export default async function CombinedReceiptPage({
 
     const receiptDate = new Date().toLocaleDateString()
 
-    // Generate a combined receipt number from client ID + date
-    const receiptNumber = `R-${clientId.slice(0, 4).toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`
+    const receiptNumber = `R-${clientId.slice(0, 4).toUpperCase()}${orders[0].id.slice(0, 4).toUpperCase()}`
 
     return (
         <div className="min-h-screen bg-muted/50 p-4 md:p-8 font-sans">

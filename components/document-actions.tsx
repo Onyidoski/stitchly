@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Download, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-import { toPng } from 'html-to-image'
+import { toJpeg } from 'html-to-image'
 import jsPDF from 'jspdf'
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
@@ -59,35 +59,32 @@ export function DocumentActions({
 
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            const dataUrl = await toPng(clone, {
-                quality: 1.0,
+            const dataUrl = await toJpeg(clone, {
+                quality: 0.9,
                 cacheBust: true,
-                pixelRatio: 2,
-                backgroundColor: '#ffffff'
+                pixelRatio: 1.6,
+                backgroundColor: '#ffffff',
+                height: clone.scrollHeight,
+                style: { overflow: 'visible' }
             })
 
             document.body.removeChild(container)
 
-            const pdf = new jsPDF('p', 'mm', 'a4')
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = pdf.internal.pageSize.getHeight()
-            const imgProps = pdf.getImageProperties(dataUrl)
+            const tempPdf = new jsPDF('p', 'mm', 'a4')
+            const pdfWidth = tempPdf.internal.pageSize.getWidth()
+            const a4Height = tempPdf.internal.pageSize.getHeight()
+            const imgProps = tempPdf.getImageProperties(dataUrl)
             const imgHeight = (imgProps.height * pdfWidth) / imgProps.width
+            const pdfHeight = Math.max(a4Height, imgHeight)
 
-            if (imgHeight <= pdfHeight) {
-                pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight)
-            } else {
-                let heightLeft = imgHeight
-                let position = 0
-                pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgHeight)
-                heightLeft -= pdfHeight
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight
-                    pdf.addPage()
-                    pdf.addImage(dataUrl, 'PNG', 0, -(pdfHeight - 10), pdfWidth, imgHeight)
-                    heightLeft -= pdfHeight
-                }
-            }
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: [pdfWidth, pdfHeight],
+                compress: true,
+            })
+
+            pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, imgHeight)
 
             pdf.save(filename)
             toast.success("Document saved successfully")

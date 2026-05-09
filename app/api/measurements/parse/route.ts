@@ -2,10 +2,28 @@ import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
+
+const parseRequestSchema = z.object({
+  text: z.string().trim().min(1).max(4000),
+});
 
 export async function POST(req: Request) {
   try {
-    const { text } = await req.json();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const parsed = parseRequestSchema.safeParse(await req.json());
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid parse request' }, { status: 400 });
+    }
+
+    const { text } = parsed.data;
 
     const { object } = await generateObject({
       model: google('gemini-2.5-pro'),
