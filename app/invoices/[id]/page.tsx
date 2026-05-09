@@ -60,6 +60,9 @@ export default async function InvoiceDetailsPage({
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-foreground">{businessName}</h1>
+                            {tenant?.slogan && (
+                                <p className="text-xs text-muted-foreground/80 italic -mt-0.5 mb-1">{tenant.slogan}</p>
+                            )}
                             <p className="text-sm text-muted-foreground mt-1">
                                 {tenant?.address || 'Lagos, Nigeria'}
                                 <br />
@@ -178,7 +181,7 @@ export default async function InvoiceDetailsPage({
                                 <li>Orders may be collected via pickup or delivered at the client’s expense.</li>
                                 <li>Once a bill or invoice has been created and finalized, its style or details can no longer be modified.</li>
                             </ul>
-                            <p className="mt-4 font-handwriting text-xl text-foreground">Thank you for your patronage, {businessName}!</p>
+                            <p className="mt-4 font-handwriting text-xl text-foreground">Thank you for choosing {businessName}!</p>
                         </div>
                     </div>
                 </div>

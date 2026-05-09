@@ -31,6 +31,7 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         const businessName = formData.get("businessName") as string
         const phone = formData.get("phone") as string
         const address = formData.get("address") as string
+        const slogan = formData.get("slogan") as string
 
         // [1] Capture new bank fields
         const bankName = formData.get("bankName") as string
@@ -47,7 +48,8 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                 // [2] Update database with payment info
                 bank_name: bankName,
                 account_name: accountName,
-                account_number: accountNumber
+                account_number: accountNumber,
+                slogan: slogan
             })
             .eq('id', tenant.id)
 
@@ -104,6 +106,16 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                         name="businessName"
                         defaultValue={tenant?.business_name}
                         required
+                    />
+                </div>
+                
+                <div className="space-y-2">
+                    <Label htmlFor="slogan">Business Slogan</Label>
+                    <Input
+                        id="slogan"
+                        name="slogan"
+                        defaultValue={tenant?.slogan}
+                        placeholder="e.g. Your Style, Our Passion"
                     />
                 </div>
 
