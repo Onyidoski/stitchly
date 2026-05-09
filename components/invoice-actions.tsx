@@ -65,50 +65,41 @@ export function InvoiceActions() {
             container.appendChild(clone)
 
             // 4. Wait briefly for images to render in the clone
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await new Promise(resolve => setTimeout(resolve, 500))
 
             // 5. Capture the CLONE (not the original element)
             const dataUrl = await toPng(clone, {
                 quality: 1.0,
                 cacheBust: true,
                 pixelRatio: 2, // 2x resolution for clear text
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                height: clone.scrollHeight, // Force the height to prevent clipping
+                style: {
+                    overflow: 'visible'
+                }
             })
 
             // Clean up the DOM
             document.body.removeChild(container)
 
             // 6. Generate PDF
-            const pdf = new jsPDF('p', 'mm', 'a4')
-            const pdfWidth = pdf.internal.pageSize.getWidth()   // 210mm
-            const pdfHeight = pdf.internal.pageSize.getHeight() // 297mm
+            const tempPdf = new jsPDF('p', 'mm', 'a4')
+            const pdfWidth = tempPdf.internal.pageSize.getWidth()   // 210mm
+            const a4Height = tempPdf.internal.pageSize.getHeight() // 297mm
 
-            const imgProps = pdf.getImageProperties(dataUrl)
+            const imgProps = tempPdf.getImageProperties(dataUrl)
             const imgHeight = (imgProps.height * pdfWidth) / imgProps.width
 
-            // Add the image
-            // If the invoice is shorter than 1 page, just add it.
-            if (imgHeight <= pdfHeight) {
-                pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight)
-            } else {
-                // If the invoice is LONG (multi-page), we split it across pages
-                let heightLeft = imgHeight
-                let position = 0
+            // Use a dynamic height so the invoice is never cut across pages
+            const pdfHeight = Math.max(a4Height, imgHeight)
 
-                pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgHeight)
-                heightLeft -= pdfHeight
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: [pdfWidth, pdfHeight]
+            })
 
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight // Shift image up for next page
-                    pdf.addPage()
-                    pdf.addImage(dataUrl, 'PNG', 0, -pdfHeight + (heightLeft - imgHeight), pdfWidth, imgHeight)
-                    // Note: Simplified multi-page logic often requires fine-tuning. 
-                    // For now, this adds a new page.
-                    // A simpler fallback for very long invoices is just adding it again with an offset:
-                    pdf.addImage(dataUrl, 'PNG', 0, -(pdfHeight - 10), pdfWidth, imgHeight) // 10mm overlap
-                    heightLeft -= pdfHeight
-                }
-            }
+            pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight)
 
             pdf.save('invoice.pdf')
             toast.success("Invoice saved successfully")

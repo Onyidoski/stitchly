@@ -83,12 +83,11 @@ export default async function CombinedInvoicePage({
                     <div className="flex flex-col gap-4">
                         <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xl overflow-hidden relative">
                             {logoUrl ? (
-                                <Image
+                                <img
                                     src={logoUrl}
                                     alt="Logo"
-                                    fill
-                                    sizes="48px"
-                                    className="object-contain p-1"
+                                    className="absolute inset-0 w-full h-full object-contain p-1"
+                                    crossOrigin="anonymous"
                                 />
                             ) : (
                                 businessName.charAt(0)
@@ -264,7 +263,7 @@ export default async function CombinedInvoicePage({
                                 <li>Orders may be collected via pickup or delivered at the client’s expense.</li>
                                 <li>Once a bill or invoice has been created and finalized, its style or details can no longer be modified.</li>
                             </ul>
-                            <p className="mt-4 font-handwriting text-xl text-foreground">Thank You!</p>
+                            <p className="mt-4 font-handwriting text-xl text-foreground">Thank you for your patronage, {businessName}!</p>
                         </div>
                     </div>
                 </div>
