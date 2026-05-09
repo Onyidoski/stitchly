@@ -3,6 +3,21 @@ import Image from 'next/image'
 import { InvoiceActions } from '@/components/invoice-actions'
 import { redirect } from 'next/navigation'
 
+// Convert an image URL to a base64 data URL on the server.
+// This avoids CORS/fetch issues on iOS Safari during client-side PDF generation.
+async function logoToBase64(url: string): Promise<string | null> {
+    try {
+        const res = await fetch(url, { cache: 'no-store' })
+        if (!res.ok) return null
+        const buffer = await res.arrayBuffer()
+        const contentType = res.headers.get('content-type') || 'image/png'
+        const base64 = Buffer.from(buffer).toString('base64')
+        return `data:${contentType};base64,${base64}`
+    } catch {
+        return null
+    }
+}
+
 export default async function CombinedInvoicePage({
     params,
     searchParams,
@@ -54,6 +69,10 @@ export default async function CombinedInvoicePage({
     const businessName = tenant?.business_name || 'Fashion Brand'
     const logoUrl = tenant?.logo_url || null
 
+    // Pre-convert logo to base64 on the server so the <img> tag embeds
+    // the image data directly — no client-side fetch needed for PDF generation.
+    const logoBase64 = logoUrl ? await logoToBase64(logoUrl) : null
+
     // Calculate totals across all orders
     const totalAmount = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
     const totalPaid = orders.reduce((sum, o) => sum + (o.paid_amount || 0), 0)
@@ -82,12 +101,11 @@ export default async function CombinedInvoicePage({
                 <div className="p-6 md:p-8 border-b flex justify-between items-start bg-muted/30 print:bg-white">
                     <div className="flex flex-col gap-4">
                         <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xl overflow-hidden relative">
-                            {logoUrl ? (
+                            {(logoBase64 || logoUrl) ? (
                                 <img
-                                    src={logoUrl}
+                                    src={logoBase64 || logoUrl!}
                                     alt="Logo"
                                     className="absolute inset-0 w-full h-full object-contain p-1"
-                                    crossOrigin="anonymous"
                                 />
                             ) : (
                                 businessName.charAt(0)
