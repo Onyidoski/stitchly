@@ -76,7 +76,7 @@ export default async function ReceiptDetailsPage({
                         <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xl overflow-hidden relative">
                             {(logoBase64 || logoUrl) ? (
                                 <img
-                                    src={logoUrl || logoBase64!}
+                                    src={logoBase64 || logoUrl!}
                                     data-pdf-src={logoBase64 || logoUrl}
                                     alt="Logo"
                                     crossOrigin="anonymous"
