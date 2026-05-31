@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EditOrderSheet } from '@/components/edit-order-sheet'
@@ -11,6 +11,8 @@ import { ExpenseManager } from '@/components/expense-manager'
 import { Calendar, FileText, X, Loader2, Receipt } from 'lucide-react'
 import Image from "next/image"
 import { RecordBulkPaymentDialog } from '@/components/record-bulk-payment-dialog'
+import { WhatsAppMessageButton } from '@/components/whatsapp-message-button'
+import type { WhatsAppMessageContext } from '@/lib/whatsapp'
 
 interface Order {
     id: string
@@ -30,9 +32,15 @@ interface Order {
 export function OrderSelectionWrapper({
     orders,
     clientId,
+    clientName,
+    clientPhone,
+    businessName,
 }: {
     orders: Order[]
     clientId: string
+    clientName: string
+    clientPhone: string | null
+    businessName: string
 }) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false)
@@ -80,6 +88,20 @@ export function OrderSelectionWrapper({
     const selectedPaid = selectedOrders.reduce((sum, o) => sum + (o.paid_amount || 0), 0)
     const selectedBalance = selectedTotal - selectedPaid
 
+    const shouldIgnoreCardClick = (target: EventTarget | null) => {
+        return target instanceof HTMLElement && Boolean(target.closest('button, a, input, textarea, [role="button"], [data-slot="dropdown-menu"]'))
+    }
+
+    const buildMessageContext = (order: Order): WhatsAppMessageContext => ({
+        clientName,
+        businessName,
+        orderName: order.fabric_description || 'Custom Order',
+        status: order.status,
+        deliveryDate: order.delivery_date,
+        totalAmount: order.total_amount || 0,
+        paidAmount: order.paid_amount || 0,
+    })
+
     return (
         <>
             {/* Select All / Deselect All toggle */}
@@ -120,60 +142,85 @@ export function OrderSelectionWrapper({
                     return (
                         <Card
                             key={order.id}
-                            className={`overflow-hidden flex flex-col transition-all duration-200 cursor-pointer ${
+                            onClick={(event) => {
+                                if (shouldIgnoreCardClick(event.target)) return
+                                toggleOrder(order.id)
+                            }}
+                            className={`gap-0 overflow-hidden py-0 flex flex-col transition-all duration-200 cursor-pointer ${
                                 isSelected
                                     ? 'ring-2 ring-primary shadow-md shadow-primary/10'
                                     : 'hover:shadow-sm'
                             }`}
                         >
-                            <CardHeader className="bg-muted/30 px-5 pt-5 pb-4 border-b border-border/40">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-start gap-3 flex-1">
-                                        {/* Checkbox */}
+                            <div className="bg-muted/30 rounded-t-xl border-b border-border/40 px-5 pt-5 pb-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex min-w-0 flex-1 items-center gap-3">
                                         <div
-                                            className="pt-0.5"
+                                            className="shrink-0 self-center"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 toggleOrder(order.id)
                                             }}
                                         >
-                                            <div className={`h-4 w-4 rounded-[3px] border flex items-center justify-center transition-colors ${
-                                                isSelected
-                                                    ? 'bg-primary border-primary text-primary-foreground'
-                                                    : 'border-input'
-                                            }`}>
+                                            <div
+                                                className={`flex h-4 w-4 items-center justify-center rounded-[3px] border transition-colors ${
+                                                    isSelected
+                                                        ? 'border-primary bg-primary text-primary-foreground'
+                                                        : 'border-input'
+                                                }`}
+                                            >
                                                 {isSelected && (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="3"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        className="h-3 w-3"
+                                                    >
                                                         <polyline points="20 6 9 17 4 12" />
                                                     </svg>
                                                 )}
                                             </div>
                                         </div>
-                                        <div
-                                            className="flex-1"
-                                            onClick={() => toggleOrder(order.id)}
-                                        >
-                                            <CardTitle className="text-base font-semibold line-clamp-1 pr-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="line-clamp-1 pr-2 text-base font-semibold leading-tight">
                                                 {order.fabric_description || 'Custom Order'}
-                                            </CardTitle>
-                                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                                                <Calendar className="h-3 w-3" />
+                                            </p>
+                                            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                                                <Calendar className="h-3 w-3 shrink-0" />
                                                 Due: {new Date(order.delivery_date).toLocaleDateString()}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant={order.status === 'ready' ? 'default' : 'outline'} className="capitalize">
+                                    <div className="flex shrink-0 items-center gap-1 self-center">
+                                        <WhatsAppMessageButton
+                                            phone={clientPhone}
+                                            context={buildMessageContext(order)}
+                                            size="icon"
+                                            variant="ghost"
+                                        />
+                                        <Badge
+                                            variant={order.status === 'ready' ? 'default' : 'outline'}
+                                            className="capitalize"
+                                        >
                                             {order.status}
                                         </Badge>
-                                        <EditOrderSheet order={order} />
+                                        <EditOrderSheet
+                                            order={order}
+                                            clientName={clientName}
+                                            clientPhone={clientPhone}
+                                            businessName={businessName}
+                                        />
                                         <DeleteOrderButton orderId={order.id} />
                                     </div>
                                 </div>
-                            </CardHeader>
+                            </div>
 
-                            <CardContent className="pt-6 flex-1 flex flex-col gap-6">
+                            <CardContent className="flex flex-1 flex-col gap-6 px-5 pb-5 pt-5">
                                 {order.style_image_urls && order.style_image_urls.length > 0 ? (
                                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
                                         {order.style_image_urls.map((url: string, i: number) => (

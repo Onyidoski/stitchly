@@ -7,6 +7,8 @@ import { RecentOrders } from '@/components/recent-orders'
 import { RevenueChart } from '@/components/revenue-chart'
 import { PendingPaymentsWidget } from '@/components/pending-payments-widget'
 import { DashboardStats } from '@/components/dashboard-stats'
+import { QuickExpense } from '@/components/quick-expense'
+import { Receipt } from 'lucide-react'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -47,7 +49,7 @@ export default async function Dashboard() {
     // Pending Payments
     supabase
       .from('orders')
-      .select('id, total_amount, paid_amount, clients(name)')
+      .select('id, total_amount, paid_amount, fabric_description, delivery_date, status, clients(name, phone)')
       .eq('tenant_id', tenantId)
       .neq('payment_status', 'paid')
       .order('created_at', { ascending: false }),
@@ -146,17 +148,30 @@ export default async function Dashboard() {
           <div className="md:col-span-2 lg:col-span-5">
             <RevenueChart data={monthlyData} />
           </div>
-          <PendingPaymentsWidget orders={pendingOrders} />
+          <PendingPaymentsWidget orders={pendingOrders} businessName={businessName} />
         </div>
 
-        {/* RECENT ORDERS */}
-        <div className="grid gap-6 md:grid-cols-1">
-          {/* [FIX] Changed bg-white to bg-card so it responds to dark mode */}
-          <Card className="shadow-sm border-none bg-card">
+        {/* QUICK EXPENSE + RECENT ORDERS */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="shadow-sm border-none bg-card lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Quick Expense</CardTitle>
+              <Link href="/finances">
+                <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-pointer gap-1">
+                  <Receipt className="h-3 w-3" />
+                  Finances
+                </Badge>
+              </Link>
+            </CardHeader>
+            <CardContent className="px-4 sm:px-6">
+              <QuickExpense compact />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-none bg-card lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">Recent Orders</CardTitle>
               <Link href="/orders">
-                {/* [FIX] Added dark mode styles for the badge */}
                 <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-pointer">
                   View All
                 </Badge>
@@ -167,6 +182,7 @@ export default async function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
       </div>
     </NavShell>
   )

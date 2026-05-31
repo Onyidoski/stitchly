@@ -41,7 +41,7 @@ interface Expense {
     description: string | null
     amount: number
     created_at: string
-    order_id: string
+    order_id: string | null
 }
 
 export function ReportView({
@@ -86,6 +86,10 @@ export function ReportView({
     const totalCollected = monthOrders.reduce((s, o) => s + (o.paid_amount || 0), 0)
     const totalOutstanding = totalRevenue - totalCollected
     const totalExpenses = monthExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0)
+    const globalExpenses = monthExpenses
+        .filter(e => !e.order_id)
+        .reduce((s, e) => s + (Number(e.amount) || 0), 0)
+    const orderExpenses = totalExpenses - globalExpenses
     const grossProfit = totalCollected - totalExpenses
     const profitMargin = totalCollected > 0 ? ((grossProfit / totalCollected) * 100).toFixed(1) : '0'
 
@@ -377,6 +381,16 @@ export function ReportView({
                         </h3>
                         {expenseByCategory.length > 0 ? (
                             <div className="space-y-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="flex-1 rounded-lg bg-muted/40 px-3 py-2">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Order-linked</p>
+                                        <p className="text-sm font-bold">₦{orderExpenses.toLocaleString()}</p>
+                                    </div>
+                                    <div className="flex-1 rounded-lg bg-muted/40 px-3 py-2">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Global / Bulk</p>
+                                        <p className="text-sm font-bold">₦{globalExpenses.toLocaleString()}</p>
+                                    </div>
+                                </div>
                                 {expenseByCategory.map(([category, amount]) => {
                                     const pct = totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(0) : '0'
                                     return (

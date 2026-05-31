@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Phone, User } from 'lucide-react'
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
+import { WhatsAppMessageButton } from '@/components/whatsapp-message-button'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -80,6 +81,19 @@ export default async function ClientDetailsPage({ params }: PageProps) {
         )
     }
 
+    const activeOrder =
+        orders?.find((o) => o.status !== 'delivered' && o.status !== 'ready') ?? orders?.[0]
+
+    const clientWhatsAppContext = {
+        clientName: client.name,
+        businessName,
+        orderName: activeOrder?.fabric_description ?? undefined,
+        status: activeOrder?.status,
+        deliveryDate: activeOrder?.delivery_date,
+        totalAmount: activeOrder?.total_amount,
+        paidAmount: activeOrder?.paid_amount,
+    }
+
     return (
         <NavShell businessName={businessName} userEmail={user.email || ''} activeOrdersCount={activeOrdersCount || 0}>
 
@@ -91,12 +105,26 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                     </Avatar>
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight">{client.name}</h2>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2.5">
-                            {client.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {client.phone}</span>}
-                            {client.gender && <span className="flex items-center gap-1 capitalize"><User className="h-3 w-3" /> {client.gender}</span>}
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-2.5">
+                            {client.phone && (
+                                <span className="flex items-center gap-1">
+                                    <Phone className="h-3 w-3" /> {client.phone}
+                                </span>
+                            )}
+                            {client.gender && (
+                                <span className="flex items-center gap-1 capitalize">
+                                    <User className="h-3 w-3" /> {client.gender}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
+                <WhatsAppMessageButton
+                    phone={client.phone}
+                    context={clientWhatsAppContext}
+                    label="Message on WhatsApp"
+                    className="w-full sm:w-auto"
+                />
             </div>
 
             <Tabs defaultValue="orders" className="space-y-4">
@@ -113,7 +141,13 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                     </div>
 
                     {orders && orders.length > 0 ? (
-                        <OrderSelectionWrapper orders={orders} clientId={client.id} />
+                        <OrderSelectionWrapper
+                            orders={orders}
+                            clientId={client.id}
+                            clientName={client.name}
+                            clientPhone={client.phone}
+                            businessName={businessName}
+                        />
                     ) : (
                         <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                             No orders yet.

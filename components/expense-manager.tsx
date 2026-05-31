@@ -9,17 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Plus, Trash2, Receipt, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from "lucide-react"
 import { toast } from "sonner"
-
-const EXPENSE_CATEGORIES = [
-    { value: 'fabric', label: 'Fabric / Material' },
-    { value: 'thread', label: 'Thread / Yarn' },
-    { value: 'needles', label: 'Needles / Pins' },
-    { value: 'buttons', label: 'Buttons / Zippers' },
-    { value: 'lining', label: 'Lining' },
-    { value: 'fuel', label: 'Fuel / Transport' },
-    { value: 'labor', label: 'Labor' },
-    { value: 'other', label: 'Other' },
-]
+import { EXPENSE_CATEGORIES, getCategoryLabel } from "@/lib/expense-categories"
+import { ExpenseCategoryIcon } from "@/components/expense-category-icon"
 
 interface Expense {
     id: string
@@ -141,22 +132,6 @@ export function ExpenseManager({ orderId, orderTotal }: ExpenseManagerProps) {
         setDeleting(null)
     }
 
-    const getCategoryLabel = (value: string) =>
-        EXPENSE_CATEGORIES.find(c => c.value === value)?.label || value
-
-    const getCategoryEmoji = (value: string) => {
-        switch (value) {
-            case 'fabric': return '🧵'
-            case 'thread': return '🪡'
-            case 'needles': return '📌'
-            case 'buttons': return '🔘'
-            case 'lining': return '📐'
-            case 'fuel': return '⛽'
-            case 'labor': return '👷'
-            default: return '📦'
-        }
-    }
-
     if (initialLoad) return null
 
     return (
@@ -205,7 +180,7 @@ export function ExpenseManager({ orderId, orderTotal }: ExpenseManagerProps) {
                                     className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 group/item hover:bg-muted/70 transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5 min-w-0">
-                                        <span className="text-sm shrink-0">{getCategoryEmoji(expense.category)}</span>
+                                        <ExpenseCategoryIcon category={expense.category} className="h-4 w-4 shrink-0 text-muted-foreground" />
                                         <div className="min-w-0">
                                             <div className="text-xs font-medium truncate">
                                                 {expense.description || getCategoryLabel(expense.category)}
@@ -255,7 +230,10 @@ export function ExpenseManager({ orderId, orderTotal }: ExpenseManagerProps) {
                                         <SelectContent>
                                             {EXPENSE_CATEGORIES.map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value} className="text-xs">
-                                                    {getCategoryEmoji(cat.value)} {cat.label}
+                                                    <span className="flex items-center gap-2">
+                                                        <ExpenseCategoryIcon category={cat.value} />
+                                                        {cat.label}
+                                                    </span>
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

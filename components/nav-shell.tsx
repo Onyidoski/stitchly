@@ -14,6 +14,7 @@ import {
   CalendarDays,
   BarChart3,
   Receipt,
+  Wallet,
 } from "lucide-react"
 import { PushNotificationToggle } from "@/components/push-notification-toggle"
 import { Button } from "@/components/ui/button"
@@ -179,6 +180,7 @@ export default function NavShell({
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Clients', href: '/clients', icon: Users },
     { name: 'Orders', href: '/orders', icon: Scissors },
+    { name: 'Finances', href: '/finances', icon: Wallet },
     { name: 'Calendar', href: '/calendar', icon: CalendarDays },
     { name: 'Invoices', href: '/invoices', icon: FileText },
     { name: 'Receipts', href: '/receipts', icon: Receipt },
