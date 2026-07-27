@@ -92,6 +92,8 @@ export default async function ClientDetailsPage({ params }: PageProps) {
         deliveryDate: activeOrder?.delivery_date,
         totalAmount: activeOrder?.total_amount,
         paidAmount: activeOrder?.paid_amount,
+        discountType: activeOrder?.discount_type,
+        discountValue: activeOrder?.discount_value ?? 0,
     }
 
     return (

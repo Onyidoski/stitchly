@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 import { WhatsAppMessageButton } from "@/components/whatsapp-message-button"
+import { getOrderBalance } from "@/lib/order-money"
 
 interface PendingOrder {
     id: string
@@ -11,6 +12,8 @@ interface PendingOrder {
     fabric_description?: string | null
     delivery_date?: string | null
     status?: string
+    discount_type?: string | null
+    discount_value?: number | null
     clients:
         | { name: string; phone?: string | null }
         | { name: string; phone?: string | null }[]
@@ -25,7 +28,7 @@ export function PendingPaymentsWidget({
     businessName: string
 }) {
     const totalPending = orders.reduce((acc, order) => {
-        return acc + (order.total_amount - (order.paid_amount || 0))
+        return acc + getOrderBalance(order)
     }, 0)
 
     const topOrders = orders.slice(0, 4)
@@ -64,7 +67,7 @@ export function PendingPaymentsWidget({
 
                 <div className="space-y-3">
                     {topOrders.map((order) => {
-                        const balance = order.total_amount - (order.paid_amount || 0)
+                        const balance = getOrderBalance(order)
                         const client = getClient(order)
 
                         return (
@@ -89,6 +92,8 @@ export function PendingPaymentsWidget({
                                             deliveryDate: order.delivery_date,
                                             totalAmount: order.total_amount,
                                             paidAmount: order.paid_amount ?? 0,
+                                            discountType: order.discount_type,
+                                            discountValue: order.discount_value ?? 0,
                                         }}
                                         templates={['payment_reminder', 'general']}
                                         size="icon"

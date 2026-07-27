@@ -1,6 +1,15 @@
 import { createClient } from '@/utils/supabase/server'
 import { InvoiceActions } from '@/components/invoice-actions'
+import { PaymentAccountsFooter } from '@/components/payment-accounts-footer'
 import { redirect } from 'next/navigation'
+import {
+    getDiscountLabel,
+    getDiscountNaira,
+    getOrderBalance,
+    getOrderNet,
+    sumOrderDiscounts,
+    sumOrderNets,
+} from '@/lib/order-money'
 
 // Convert an image URL to a base64 data URL on the server.
 // This avoids CORS/fetch issues on iOS Safari during client-side PDF generation.
@@ -87,8 +96,10 @@ export default async function CombinedInvoicePage({
 
     // Calculate totals across all orders
     const totalAmount = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+    const totalDiscount = sumOrderDiscounts(orders)
+    const totalNet = sumOrderNets(orders)
     const totalPaid = orders.reduce((sum, o) => sum + (o.paid_amount || 0), 0)
-    const balance = totalAmount - totalPaid
+    const balance = orders.reduce((sum, o) => sum + getOrderBalance(o), 0)
     const isPaid = balance <= 0
 
     const invoiceDate = new Date().toLocaleDateString()
@@ -198,7 +209,14 @@ export default async function CombinedInvoicePage({
                                             </p>
                                         </td>
                                         <td className="px-4 py-4 text-center">{order.quantity}</td>
-                                        <td className="px-4 py-4 text-right">₦{order.total_amount.toLocaleString()}</td>
+                                        <td className="px-4 py-4 text-right">
+                                            ₦{order.total_amount.toLocaleString()}
+                                            {getDiscountNaira(order) > 0 && (
+                                                <p className="text-[10px] text-emerald-600 mt-0.5">
+                                                    −{getDiscountLabel(order)} → ₦{Math.round(getOrderNet(order)).toLocaleString()}
+                                                </p>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -213,6 +231,18 @@ export default async function CombinedInvoicePage({
                             <span>Subtotal ({orders.length} item{orders.length !== 1 ? 's' : ''})</span>
                             <span>₦{totalAmount.toLocaleString()}</span>
                         </div>
+                        {totalDiscount > 0 && (
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Discount</span>
+                                <span className="text-emerald-600">−₦{Math.round(totalDiscount).toLocaleString()}</span>
+                            </div>
+                        )}
+                        {totalDiscount > 0 && (
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Net</span>
+                                <span>₦{Math.round(totalNet).toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-sm text-muted-foreground">
                             <span>Total Paid</span>
                             <span>(₦{totalPaid.toLocaleString()})</span>
@@ -220,7 +250,7 @@ export default async function CombinedInvoicePage({
                         <div className="border-t pt-3 flex justify-between items-center">
                             <span className="font-bold text-foreground">Total Due</span>
                             <span className={`text-xl font-bold ${isPaid ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
-                                ₦{balance.toLocaleString()}
+                                ₦{Math.round(balance).toLocaleString()}
                             </span>
                         </div>
 
@@ -244,7 +274,7 @@ export default async function CombinedInvoicePage({
                             </div>
                             <div className="divide-y">
                                 {orders.map((order, index) => {
-                                    const orderBalance = order.total_amount - (order.paid_amount || 0)
+                                    const orderBalance = getOrderBalance(order)
                                     const orderPaid = orderBalance <= 0
                                     return (
                                         <div key={order.id} className="flex items-center justify-between px-4 py-3 text-sm">
@@ -265,7 +295,7 @@ export default async function CombinedInvoicePage({
                                                         ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                         : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                                                 }`}>
-                                                    {orderPaid ? 'Cleared' : `₦${orderBalance.toLocaleString()} due`}
+                                                    {orderPaid ? 'Cleared' : `₦${Math.round(orderBalance).toLocaleString()} due`}
                                                 </span>
                                             </div>
                                         </div>
@@ -279,14 +309,7 @@ export default async function CombinedInvoicePage({
                 {/* 6. FOOTER */}
                 <div className="p-6 md:p-8 bg-muted/30 border-t mt-8 print:bg-white print:border-t-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Payment Details</h4>
-                            <p className="text-sm text-muted-foreground">
-                                Bank Name: <span className="font-medium text-foreground">{tenant?.bank_name || 'Not set'}</span><br />
-                                Account Name: <span className="font-medium text-foreground">{tenant?.account_name || tenant?.business_name}</span><br />
-                                Account No: <span className="font-medium text-foreground">{tenant?.account_number || 'Not set'}</span>
-                            </p>
-                        </div>
+                        <PaymentAccountsFooter tenant={tenant} />
                         <div>
                             <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Terms & Conditions</h4>
                             <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">

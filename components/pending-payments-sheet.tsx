@@ -4,12 +4,15 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
+import { getOrderBalance, getOrderNet } from "@/lib/order-money"
 
 // Updated Interface: More flexible to prevent TypeScript errors
 export interface PendingOrder {
     id: string
     total_amount: number
     paid_amount: number | null
+    discount_type?: string | null
+    discount_value?: number | null
     clients: any // Set to 'any' to handle both objects and arrays from Supabase
 }
 
@@ -20,7 +23,7 @@ interface PendingPaymentsSheetProps {
 export function PendingPaymentsSheet({ orders }: PendingPaymentsSheetProps) {
     // Calculate total owed
     const totalPending = orders.reduce((acc, order) => {
-        return acc + (order.total_amount - (order.paid_amount || 0))
+        return acc + getOrderBalance(order)
     }, 0)
 
     return (
@@ -61,7 +64,8 @@ export function PendingPaymentsSheet({ orders }: PendingPaymentsSheetProps) {
                         <TableBody>
                             {orders.length > 0 ? (
                                 orders.map((order) => {
-                                    const balance = order.total_amount - (order.paid_amount || 0)
+                                    const balance = getOrderBalance(order)
+                                    const net = getOrderNet(order)
                                     // Handle if clients is an array or object
                                     const clientName = Array.isArray(order.clients)
                                         ? order.clients[0]?.name
@@ -73,7 +77,7 @@ export function PendingPaymentsSheet({ orders }: PendingPaymentsSheetProps) {
                                                 {clientName || 'Unknown'}
                                             </TableCell>
                                             <TableCell className="text-right text-muted-foreground">
-                                                ₦{order.total_amount.toLocaleString()}
+                                                ₦{Math.round(net).toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right text-muted-foreground">
                                                 ₦{order.paid_amount?.toLocaleString() || '0'}

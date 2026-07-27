@@ -11,6 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Edit2, CalendarIcon } from "lucide-react"
 import { toast } from "sonner"
 import { WhatsAppMessageButton } from "@/components/whatsapp-message-button"
+import { OrderDiscountFields } from "@/components/order-discount-fields"
+import {
+    getOrderNet,
+    type DiscountType,
+} from "@/lib/order-money"
 import type { WhatsAppMessageContext } from "@/lib/whatsapp"
 
 interface EditOrderProps {
@@ -22,6 +27,8 @@ interface EditOrderProps {
         paid_amount: number
         delivery_date: string
         fabric_description?: string | null
+        discount_type?: DiscountType | string | null
+        discount_value?: number | null
     }
     clientName: string
     clientPhone: string | null
@@ -36,6 +43,16 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
 
     const [status, setStatus] = useState(order.status)
     const [paymentStatus, setPaymentStatus] = useState(order.payment_status)
+    const [discountType, setDiscountType] = useState<DiscountType>(
+        (order.discount_type as DiscountType) || null
+    )
+    const [discountValue, setDiscountValue] = useState(Number(order.discount_value) || 0)
+
+    const netAmount = getOrderNet({
+        total_amount: order.total_amount,
+        discount_type: discountType,
+        discount_value: discountValue,
+    })
 
     const messageContext: WhatsAppMessageContext = {
         clientName,
@@ -45,6 +62,8 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
         deliveryDate: order.delivery_date,
         totalAmount: order.total_amount,
         paidAmount: order.paid_amount,
+        discountType,
+        discountValue,
     }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -62,6 +81,8 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
                 payment_status: paymentStatus,
                 paid_amount: newPaidAmount,
                 delivery_date: newDeliveryDate,
+                discount_type: discountType,
+                discount_value: discountType ? discountValue : 0,
             })
             .eq('id', order.id)
 
@@ -77,7 +98,7 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
     }
 
     const getAmountDefaultValue = () => {
-        if (paymentStatus === 'paid') return order.total_amount
+        if (paymentStatus === 'paid') return netAmount
         if (paymentStatus === 'unpaid') return 0
         return order.paid_amount || 0
     }
@@ -93,11 +114,11 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
                 </Button>
             </SheetTrigger>
 
-            <SheetContent className="sm:max-w-[400px] sm:px-8 px-6">
+            <SheetContent className="sm:max-w-[400px] sm:px-8 px-6 overflow-y-auto">
                 <SheetHeader>
                     <SheetTitle>Manage Order</SheetTitle>
                     <SheetDescription>
-                        Update progress, dates, and payments.
+                        Update progress, dates, discounts, and payments.
                     </SheetDescription>
                 </SheetHeader>
                 <form onSubmit={handleSubmit} className="grid gap-6 py-6">
@@ -139,6 +160,14 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
 
                     <div className="border-t my-2"></div>
 
+                    <OrderDiscountFields
+                        totalAmount={order.total_amount}
+                        type={discountType}
+                        value={discountValue}
+                        onTypeChange={setDiscountType}
+                        onValueChange={setDiscountValue}
+                    />
+
                     <div className="space-y-2">
                         <Label htmlFor="payment_status">Payment Status</Label>
                         <Select
@@ -159,8 +188,8 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-muted-foreground text-xs">Total Amount</Label>
-                            <Input disabled value={order.total_amount} className="bg-muted" />
+                            <Label className="text-muted-foreground text-xs">Net Amount</Label>
+                            <Input disabled value={Math.round(netAmount)} className="bg-muted" />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="paid_amount">Amount Paid</Label>
@@ -169,7 +198,7 @@ export function EditOrderSheet({ order, clientName, clientPhone, businessName }:
                                 name="paid_amount"
                                 type="number"
                                 defaultValue={getAmountDefaultValue()}
-                                key={paymentStatus}
+                                key={`${paymentStatus}-${netAmount}`}
                             />
                         </div>
                     </div>

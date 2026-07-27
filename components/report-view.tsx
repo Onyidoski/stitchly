@@ -7,6 +7,7 @@ import { toPng } from 'html-to-image'
 import jsPDF from 'jspdf'
 import { toast } from 'sonner'
 import { useTheme } from 'next-themes'
+import { getOrderNet, sumOrderNets } from '@/lib/order-money'
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -31,6 +32,8 @@ interface Order {
     total_amount: number
     paid_amount: number
     payment_status: string
+    discount_type?: string | null
+    discount_value?: number | null
     client_id: string
     clients: { name: string; email: string | null } | null
 }
@@ -81,8 +84,8 @@ export function ReportView({
             return d.getMonth() === month && d.getFullYear() === year
         }), [expenses, month, year])
 
-    // Financial calculations
-    const totalRevenue = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0)
+    // Financial calculations (revenue = net after discounts)
+    const totalRevenue = sumOrderNets(monthOrders)
     const totalCollected = monthOrders.reduce((s, o) => s + (o.paid_amount || 0), 0)
     const totalOutstanding = totalRevenue - totalCollected
     const totalExpenses = monthExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0)
@@ -108,7 +111,7 @@ export function ReportView({
         monthOrders.forEach(o => {
             const name = o.clients?.name || 'Unknown'
             if (!clientMap[name]) clientMap[name] = { name, revenue: 0, orders: 0 }
-            clientMap[name].revenue += o.total_amount || 0
+            clientMap[name].revenue += getOrderNet(o)
             clientMap[name].orders += 1
         })
         return Object.values(clientMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
@@ -325,7 +328,7 @@ export function ReportView({
                                                         {order.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 text-right font-medium">₦{order.total_amount?.toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-right font-medium">₦{Math.round(getOrderNet(order)).toLocaleString()}</td>
                                                 <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell">₦{order.paid_amount?.toLocaleString()}</td>
                                             </tr>
                                         ))}

@@ -1,3 +1,5 @@
+import { getOrderBalance, getOrderNet } from '@/lib/order-money'
+
 export type WhatsAppTemplateId =
     | 'general'
     | 'order_registered'
@@ -14,6 +16,8 @@ export type WhatsAppMessageContext = {
     deliveryDate?: string | Date | null
     totalAmount?: number
     paidAmount?: number
+    discountType?: 'fixed' | 'percent' | null | string
+    discountValue?: number
 }
 
 const TEMPLATE_LABELS: Record<WhatsAppTemplateId, string> = {
@@ -86,7 +90,11 @@ export function buildWhatsAppMessage(
     const order = ctx.orderName?.trim() || 'your order'
     const delivery = formatDeliveryDate(ctx.deliveryDate)
     const status = formatStatus(ctx.status)
-    const total = ctx.totalAmount ?? 0
+    const total = getOrderNet({
+        total_amount: ctx.totalAmount,
+        discount_type: ctx.discountType,
+        discount_value: ctx.discountValue,
+    })
     const paid = ctx.paidAmount ?? 0
     const balance = Math.max(0, total - paid)
 
@@ -118,7 +126,12 @@ export function buildWhatsAppMessage(
 
 /** Pick sensible templates based on order/payment state. */
 export function getSuggestedTemplates(ctx: WhatsAppMessageContext): WhatsAppTemplateId[] {
-    const balance = Math.max(0, (ctx.totalAmount ?? 0) - (ctx.paidAmount ?? 0))
+    const balance = getOrderBalance({
+        total_amount: ctx.totalAmount,
+        paid_amount: ctx.paidAmount,
+        discount_type: ctx.discountType,
+        discount_value: ctx.discountValue,
+    })
     const status = ctx.status?.toLowerCase()
 
     if (!ctx.orderName) {

@@ -33,10 +33,13 @@ export function SettingsForm({ tenant }: { tenant: any }) {
         const address = formData.get("address") as string
         const slogan = formData.get("slogan") as string
 
-        // [1] Capture new bank fields
+        // [1] Capture bank fields (Account 1 + optional Account 2)
         const bankName = formData.get("bankName") as string
         const accountName = formData.get("accountName") as string
         const accountNumber = formData.get("accountNumber") as string
+        const bankName2 = formData.get("bankName2") as string
+        const accountName2 = formData.get("accountName2") as string
+        const accountNumber2 = formData.get("accountNumber2") as string
 
         const { error } = await supabase
             .from('tenants')
@@ -45,10 +48,12 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                 phone: phone,
                 address: address,
                 logo_url: logoUrl,
-                // [2] Update database with payment info
                 bank_name: bankName,
                 account_name: accountName,
                 account_number: accountNumber,
+                bank_name_2: bankName2 || null,
+                account_name_2: accountName2 || null,
+                account_number_2: accountNumber2 || null,
                 slogan: slogan
             })
             .eq('id', tenant.id)
@@ -141,38 +146,84 @@ export function SettingsForm({ tenant }: { tenant: any }) {
                     </div>
                 </div>
 
-                {/* [3] NEW: Payment Information Section */}
-                <div className="pt-4 border-t mt-2">
-                    <h3 className="font-semibold mb-4 text-sm text-foreground">Payment Information</h3>
-                    <div className="grid gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="bankName">Bank Name</Label>
-                                <Input
-                                    id="bankName"
-                                    name="bankName"
-                                    defaultValue={tenant?.bank_name}
-                                    placeholder="e.g. GTBank"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="accountNumber">Account Number</Label>
-                                <Input
-                                    id="accountNumber"
-                                    name="accountNumber"
-                                    defaultValue={tenant?.account_number}
-                                    placeholder="0123456789"
-                                />
+                {/* Payment Information — up to 2 accounts */}
+                <div className="pt-4 border-t mt-2 space-y-6">
+                    <div>
+                        <h3 className="font-semibold mb-1 text-sm text-foreground">Payment Information</h3>
+                        <p className="text-xs text-muted-foreground mb-4">
+                            Shown on invoices and receipts. You can add up to 2 bank accounts.
+                        </p>
+
+                        <div className="space-y-4 rounded-lg border p-4">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account 1</p>
+                            <div className="grid gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bankName">Bank Name</Label>
+                                        <Input
+                                            id="bankName"
+                                            name="bankName"
+                                            defaultValue={tenant?.bank_name}
+                                            placeholder="e.g. GTBank"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="accountNumber">Account Number</Label>
+                                        <Input
+                                            id="accountNumber"
+                                            name="accountNumber"
+                                            defaultValue={tenant?.account_number}
+                                            placeholder="0123456789"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="accountName">Account Name</Label>
+                                    <Input
+                                        id="accountName"
+                                        name="accountName"
+                                        defaultValue={tenant?.account_name}
+                                        placeholder="Account Name"
+                                    />
+                                </div>
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="accountName">Account Name</Label>
-                            <Input
-                                id="accountName"
-                                name="accountName"
-                                defaultValue={tenant?.account_name}
-                                placeholder="Account Name"
-                            />
+
+                        <div className="space-y-4 rounded-lg border p-4 mt-4">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Account 2 <span className="font-normal normal-case tracking-normal">(optional)</span>
+                            </p>
+                            <div className="grid gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bankName2">Bank Name</Label>
+                                        <Input
+                                            id="bankName2"
+                                            name="bankName2"
+                                            defaultValue={tenant?.bank_name_2 || ''}
+                                            placeholder="e.g. Access Bank"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="accountNumber2">Account Number</Label>
+                                        <Input
+                                            id="accountNumber2"
+                                            name="accountNumber2"
+                                            defaultValue={tenant?.account_number_2 || ''}
+                                            placeholder="0123456789"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="accountName2">Account Name</Label>
+                                    <Input
+                                        id="accountName2"
+                                        name="accountName2"
+                                        defaultValue={tenant?.account_name_2 || ''}
+                                        placeholder="Account Name"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

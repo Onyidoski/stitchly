@@ -1,5 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
 import { InvoiceActions } from '@/components/invoice-actions'
+import { PaymentAccountsFooter } from '@/components/payment-accounts-footer'
+import {
+    getDiscountLabel,
+    getDiscountNaira,
+    getOrderBalance,
+    getOrderNet,
+} from '@/lib/order-money'
 
 // Convert an image URL to a base64 data URL on the server.
 // This avoids CORS/fetch issues on iOS Safari during client-side PDF generation.
@@ -58,7 +65,10 @@ export default async function InvoiceDetailsPage({
     // the image data directly — no client-side fetch needed for PDF generation.
     const logoBase64 = logoUrl ? await logoToBase64(logoUrl) : null
 
-    const balance = (order.total_amount || 0) - (order.paid_amount || 0)
+    const balance = getOrderBalance(order)
+    const discount = getDiscountNaira(order)
+    const net = getOrderNet(order)
+    const discountLabel = getDiscountLabel(order)
     const isPaid = balance <= 0
     const invoiceDate = new Date(order.created_at).toLocaleDateString()
     const dueDate = new Date(order.delivery_date).toLocaleDateString()
@@ -168,6 +178,18 @@ export default async function InvoiceDetailsPage({
                             <span>Subtotal</span>
                             <span>₦{(order.total_amount || 0).toLocaleString()}</span>
                         </div>
+                        {discount > 0 && (
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Discount</span>
+                                <span className="text-emerald-600">−{discountLabel}</span>
+                            </div>
+                        )}
+                        {discount > 0 && (
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Net</span>
+                                <span>₦{Math.round(net).toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-sm text-muted-foreground">
                             <span>Paid</span>
                             <span>(₦{order.paid_amount?.toLocaleString() || '0'})</span>
@@ -175,7 +197,7 @@ export default async function InvoiceDetailsPage({
                         <div className="border-t pt-3 flex justify-between items-center">
                             <span className="font-bold text-foreground">Total Due</span>
                             <span className={`text-xl font-bold ${isPaid ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
-                                ₦{balance.toLocaleString()}
+                                ₦{Math.round(balance).toLocaleString()}
                             </span>
                         </div>
 
@@ -193,15 +215,7 @@ export default async function InvoiceDetailsPage({
                 {/* 5. FOOTER */}
                 <div className="p-6 md:p-8 bg-muted/30 border-t mt-8 print:bg-white print:border-t-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Payment Details</h4>
-                            {/* DYNAMIC PAYMENT DETAILS */}
-                            <p className="text-sm text-muted-foreground">
-                                Bank Name: <span className="font-medium text-foreground">{tenant?.bank_name || 'Not set'}</span><br />
-                                Account Name: <span className="font-medium text-foreground">{tenant?.account_name || tenant?.business_name}</span><br />
-                                Account No: <span className="font-medium text-foreground">{tenant?.account_number || 'Not set'}</span>
-                            </p>
-                        </div>
+                        <PaymentAccountsFooter tenant={tenant} />
                         <div>
                             <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Terms & Conditions</h4>
                             <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">

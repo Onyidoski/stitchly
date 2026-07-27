@@ -49,7 +49,7 @@ export default async function Dashboard() {
     // Pending Payments
     supabase
       .from('orders')
-      .select('id, total_amount, paid_amount, fabric_description, delivery_date, status, clients(name, phone)')
+      .select('id, total_amount, paid_amount, discount_type, discount_value, fabric_description, delivery_date, status, clients(name, phone)')
       .eq('tenant_id', tenantId)
       .neq('payment_status', 'paid')
       .order('created_at', { ascending: false }),

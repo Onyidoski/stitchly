@@ -13,6 +13,7 @@ import Image from "next/image"
 import { RecordBulkPaymentDialog } from '@/components/record-bulk-payment-dialog'
 import { WhatsAppMessageButton } from '@/components/whatsapp-message-button'
 import type { WhatsAppMessageContext } from '@/lib/whatsapp'
+import { getOrderBalance, getOrderNet, sumOrderNets } from '@/lib/order-money'
 
 interface Order {
     id: string
@@ -84,9 +85,9 @@ export function OrderSelectionWrapper({
 
     // Calculate totals for selected orders
     const selectedOrders = orders.filter(o => selectedIds.has(o.id))
-    const selectedTotal = selectedOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+    const selectedTotal = sumOrderNets(selectedOrders)
     const selectedPaid = selectedOrders.reduce((sum, o) => sum + (o.paid_amount || 0), 0)
-    const selectedBalance = selectedTotal - selectedPaid
+    const selectedBalance = selectedOrders.reduce((sum, o) => sum + getOrderBalance(o), 0)
 
     const shouldIgnoreCardClick = (target: EventTarget | null) => {
         return target instanceof HTMLElement && Boolean(target.closest('button, a, input, textarea, [role="button"], [data-slot="dropdown-menu"]'))
@@ -100,6 +101,8 @@ export function OrderSelectionWrapper({
         deliveryDate: order.delivery_date,
         totalAmount: order.total_amount || 0,
         paidAmount: order.paid_amount || 0,
+        discountType: order.discount_type,
+        discountValue: order.discount_value ?? 0,
     })
 
     return (
@@ -259,10 +262,10 @@ export function OrderSelectionWrapper({
                                     </div>
                                     <div className="text-right">
                                         <div className="font-bold text-lg flex items-center justify-end gap-1">
-                                            <span>₦{order.total_amount?.toLocaleString()}</span>
+                                            <span>₦{Math.round(getOrderNet(order)).toLocaleString()}</span>
                                         </div>
                                         <div className="flex items-center justify-end gap-2">
-                                            {order.paid_amount > 0 && order.paid_amount < order.total_amount && (
+                                            {order.paid_amount > 0 && getOrderBalance(order) > 0 && (
                                                 <span className="text-xs text-muted-foreground">
                                                     Pd: ₦{order.paid_amount.toLocaleString()}
                                                 </span>
@@ -275,7 +278,7 @@ export function OrderSelectionWrapper({
                                 </div>
 
                                 {/* EXPENSE TRACKER */}
-                                <ExpenseManager orderId={order.id} orderTotal={order.total_amount || 0} />
+                                <ExpenseManager orderId={order.id} orderTotal={getOrderNet(order)} />
                             </CardContent>
                         </Card>
                     )

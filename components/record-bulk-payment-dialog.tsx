@@ -9,12 +9,15 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Loader2, Banknote } from "lucide-react"
 import { toast } from "sonner"
+import { getOrderBalance, getPaymentStatusForPaidAmount } from "@/lib/order-money"
 
 interface Order {
     id: string
     total_amount: number
     paid_amount: number
     delivery_date: string
+    discount_type?: string | null
+    discount_value?: number | null
     [key: string]: any
 }
 
@@ -29,7 +32,7 @@ export function RecordBulkPaymentDialog({ selectedOrders, onSuccess }: RecordBul
     const router = useRouter()
     const supabase = createClient()
 
-    const totalDue = selectedOrders.reduce((sum, o) => sum + (o.total_amount - (o.paid_amount || 0)), 0)
+    const totalDue = selectedOrders.reduce((sum, o) => sum + getOrderBalance(o), 0)
     const [amount, setAmount] = useState<string>(totalDue.toString())
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -60,12 +63,12 @@ export function RecordBulkPaymentDialog({ selectedOrders, onSuccess }: RecordBul
             for (const order of sortedOrders) {
                 if (remainingPayment <= 0) break
 
-                const amountDue = order.total_amount - (order.paid_amount || 0)
+                const amountDue = getOrderBalance(order)
                 if (amountDue <= 0) continue
 
                 const amountToApply = Math.min(amountDue, remainingPayment)
                 const newPaidAmount = (order.paid_amount || 0) + amountToApply
-                const newPaymentStatus = newPaidAmount >= order.total_amount ? 'paid' : 'deposit'
+                const newPaymentStatus = getPaymentStatusForPaidAmount(order, newPaidAmount)
 
                 updates.push({
                     id: order.id,

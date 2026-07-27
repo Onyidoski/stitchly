@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Scissors, Loader2, Sparkles, ArrowRight } from "lucide-react"
 import { ImageUploader } from "@/components/image-uploader"
+import { OrderDiscountFields } from "@/components/order-discount-fields"
 import { toast } from "sonner"
+import type { DiscountType } from "@/lib/order-money"
 
 export function AddOrderSheet({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
@@ -26,6 +28,9 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
   } | null>(null)
   const [description, setDescription] = useState("")
   const [clientMeasurements, setClientMeasurements] = useState<any>(null)
+  const [totalAmountPreview, setTotalAmountPreview] = useState(0)
+  const [discountType, setDiscountType] = useState<DiscountType>(null)
+  const [discountValue, setDiscountValue] = useState(0)
 
   const router = useRouter()
   const supabase = createClient()
@@ -175,6 +180,11 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
         .single()
 
       if (profile?.tenant_id) {
+        const typeRaw = (formData.get("discount_type") as string) || ''
+        const parsedType: DiscountType =
+          typeRaw === 'fixed' || typeRaw === 'percent' ? typeRaw : null
+        const parsedValue = Number(formData.get("discount_value")) || 0
+
         const { error } = await supabase.from('orders').insert({
           tenant_id: profile.tenant_id,
           client_id: clientId,
@@ -182,6 +192,8 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           color: formData.get("color"),
           quantity: Number(formData.get("quantity")),
           total_amount: Number(formData.get("amount")),
+          discount_type: parsedType,
+          discount_value: parsedType ? parsedValue : 0,
           delivery_date: formData.get("delivery_date"),
           style_image_urls: imageUrls,
           status: 'cutting',
@@ -195,6 +207,9 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           setImageUrls([])
           setEstimate(null)
           setDescription("")
+          setTotalAmountPreview(0)
+          setDiscountType(null)
+          setDiscountValue(0)
           router.refresh()
         } else {
           console.error(error)
@@ -277,6 +292,7 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
                       const input = document.getElementById('amount') as HTMLInputElement
                       if (input) {
                         input.value = estimate.price_max.toString()
+                        setTotalAmountPreview(estimate.price_max)
                         setTimeout(() => saveDraft(), 0)
                       }
                       toast.success(`Applied price: N${estimate.price_max}`)
@@ -308,13 +324,29 @@ export function AddOrderSheet({ clientId }: { clientId: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Total Amount (N)</Label>
-              <Input id="amount" name="amount" type="number" placeholder="0.00" required />
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                placeholder="0.00"
+                required
+                onChange={(e) => setTotalAmountPreview(Number(e.target.value) || 0)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery_date">Delivery Date</Label>
               <Input id="delivery_date" name="delivery_date" type="date" required />
             </div>
           </div>
+
+          <OrderDiscountFields
+            totalAmount={totalAmountPreview}
+            type={discountType}
+            value={discountValue}
+            onTypeChange={setDiscountType}
+            onValueChange={setDiscountValue}
+            useHiddenInputs
+          />
 
           <div className="space-y-2">
             <Label>Style References</Label>

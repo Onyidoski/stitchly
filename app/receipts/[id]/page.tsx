@@ -1,5 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
 import { ReceiptActions } from '@/components/receipt-actions'
+import { PaymentAccountsFooter } from '@/components/payment-accounts-footer'
+import {
+    getDiscountLabel,
+    getDiscountNaira,
+    getOrderBalance,
+    getOrderNet,
+} from '@/lib/order-money'
 
 // Convert an image URL to a base64 data URL on the server.
 async function logoToBase64(url: string): Promise<string | null> {
@@ -55,7 +62,10 @@ export default async function ReceiptDetailsPage({
     const logoBase64 = logoUrl ? await logoToBase64(logoUrl) : null
 
     const totalPaid = order.paid_amount || 0
-    const balance = (order.total_amount || 0) - totalPaid
+    const balance = getOrderBalance(order)
+    const discount = getDiscountNaira(order)
+    const net = getOrderNet(order)
+    const discountLabel = getDiscountLabel(order)
     const isPaid = balance <= 0
     const receiptDate = new Date().toLocaleDateString()
     const orderDate = new Date(order.created_at).toLocaleDateString()
@@ -165,6 +175,18 @@ export default async function ReceiptDetailsPage({
                             <span>Order Total</span>
                             <span>₦{(order.total_amount || 0).toLocaleString()}</span>
                         </div>
+                        {discount > 0 && (
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Discount</span>
+                                <span className="text-emerald-600">−{discountLabel}</span>
+                            </div>
+                        )}
+                        {discount > 0 && (
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>Net</span>
+                                <span>₦{Math.round(net).toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="border-t pt-3 flex justify-between items-center">
                             <span className="font-bold text-emerald-700 dark:text-emerald-400">Amount Paid</span>
                             <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -174,7 +196,7 @@ export default async function ReceiptDetailsPage({
                         {balance > 0 && (
                             <div className="flex justify-between text-sm text-muted-foreground">
                                 <span>Outstanding Balance</span>
-                                <span className="text-red-600 font-semibold">₦{balance.toLocaleString()}</span>
+                                <span className="text-red-600 font-semibold">₦{Math.round(balance).toLocaleString()}</span>
                             </div>
                         )}
 
@@ -192,21 +214,14 @@ export default async function ReceiptDetailsPage({
                 {/* 5. FOOTER */}
                 <div className="p-6 md:p-8 bg-muted/30 border-t mt-8 print:bg-white print:border-t-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Payment Information</h4>
-                            <p className="text-sm text-muted-foreground">
-                                Bank Name: <span className="font-medium text-foreground">{tenant?.bank_name || 'Not set'}</span><br />
-                                Account Name: <span className="font-medium text-foreground">{tenant?.account_name || tenant?.business_name}</span><br />
-                                Account No: <span className="font-medium text-foreground">{tenant?.account_number || 'Not set'}</span>
-                            </p>
-                        </div>
+                        <PaymentAccountsFooter tenant={tenant} title="Payment Information" />
                         <div>
                             <h4 className="font-bold text-xs uppercase text-muted-foreground mb-2">Note</h4>
                             <p className="text-xs text-muted-foreground">
                                 This receipt confirms the payment received for the above order.
                                 Please retain this document for your records.
                                 {balance > 0 && (
-                                    <> The outstanding balance of ₦{balance.toLocaleString()} is due upon final fitting and before pickup.</>
+                                    <> The outstanding balance of ₦{Math.round(balance).toLocaleString()} is due upon final fitting and before pickup.</>
                                 )}
                             </p>
                             <p className="mt-4 font-handwriting text-xl text-foreground">Thank you for choosing {businessName}!</p>

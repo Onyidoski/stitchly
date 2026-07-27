@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText } from "lucide-react"
 import Link from "next/link"
 import { Search } from '@/components/search' // Import the new component
+import { getOrderBalance, getOrderNet } from '@/lib/order-money'
 
 export default async function InvoicesPage({
     searchParams,
@@ -81,7 +82,8 @@ export default async function InvoicesPage({
                         </TableHeader>
                         <TableBody>
                             {filteredOrders?.map((order) => {
-                                const balance = order.total_amount - (order.paid_amount || 0)
+                                const balance = getOrderBalance(order)
+                                const net = getOrderNet(order)
                                 return (
                                     <TableRow key={order.id}>
                                         <TableCell className="font-mono text-xs hidden xs:table-cell">
@@ -100,7 +102,7 @@ export default async function InvoicesPage({
                                                 {order.clients?.name || 'Unknown'}
                                             </Link>
                                         </TableCell>
-                                        <TableCell className="hidden md:table-cell">₦{order.total_amount.toLocaleString()}</TableCell>
+                                        <TableCell className="hidden md:table-cell">₦{Math.round(net).toLocaleString()}</TableCell>
                                         <TableCell className="text-muted-foreground hidden md:table-cell">
                                             ₦{order.paid_amount?.toLocaleString() || '0'}
                                         </TableCell>

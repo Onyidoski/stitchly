@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Clock, User } from 'lucide-react'
 import Link from 'next/link'
+import { getOrderBalance, getOrderNet } from '@/lib/order-money'
 
 interface Order {
     id: string
@@ -16,6 +17,8 @@ interface Order {
     total_amount: number
     paid_amount: number
     payment_status: string
+    discount_type?: string | null
+    discount_value?: number | null
     client_id: string
     clients: {
         name: string
@@ -277,7 +280,8 @@ export function CalendarView({ orders }: { orders: Order[] }) {
                             {selectedOrders.length > 0 ? (
                                 <div className="divide-y max-h-[60vh] overflow-y-auto">
                                     {selectedOrders.map(order => {
-                                        const balance = order.total_amount - (order.paid_amount || 0)
+                                        const balance = getOrderBalance(order)
+                                        const net = getOrderNet(order)
                                         const isOverdue = new Date(order.delivery_date) < today && order.status !== 'delivered' && order.status !== 'ready'
                                         return (
                                             <Link
@@ -302,10 +306,10 @@ export function CalendarView({ orders }: { orders: Order[] }) {
 
                                                 <div className="flex items-center justify-between mt-2">
                                                     <span className="text-xs text-muted-foreground">
-                                                        ₦{order.total_amount?.toLocaleString()}
+                                                        ₦{Math.round(net).toLocaleString()}
                                                         {balance > 0 && (
                                                             <span className="text-red-500 ml-1">
-                                                                (₦{balance.toLocaleString()} due)
+                                                                (₦{Math.round(balance).toLocaleString()} due)
                                                             </span>
                                                         )}
                                                     </span>
