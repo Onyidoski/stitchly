@@ -8,20 +8,6 @@ import {
     getOrderNet,
 } from '@/lib/order-money'
 
-// Convert an image URL to a base64 data URL on the server.
-async function logoToBase64(url: string): Promise<string | null> {
-    try {
-        const res = await fetch(url, { cache: 'no-store' })
-        if (!res.ok) return null
-        const buffer = await res.arrayBuffer()
-        const contentType = res.headers.get('content-type') || 'image/png'
-        const base64 = Buffer.from(buffer).toString('base64')
-        return `data:${contentType};base64,${base64}`
-    } catch {
-        return null
-    }
-}
-
 export default async function ReceiptDetailsPage({
     params,
 }: {
@@ -59,7 +45,9 @@ export default async function ReceiptDetailsPage({
 
     const businessName = tenant?.business_name || 'Fashion Brand'
     const logoUrl = tenant?.logo_url || null
-    const logoBase64 = logoUrl ? await logoToBase64(logoUrl) : null
+    // Served from our own address (app/api/logo) so it never depends on cross-site image
+    // permissions or a giant embedded base64 string. ?v= changes whenever a new logo is uploaded.
+    const logoSrc = logoUrl ? `/api/logo?v=${encodeURIComponent(logoUrl.split('/').pop() ?? '')}` : null
 
     const totalPaid = order.paid_amount || 0
     const balance = getOrderBalance(order)
@@ -84,12 +72,11 @@ export default async function ReceiptDetailsPage({
                 <div className="p-6 md:p-8 border-b flex justify-between items-start bg-muted/30 print:bg-white">
                     <div className="flex flex-col gap-4">
                         <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xl overflow-hidden relative">
-                            {(logoBase64 || logoUrl) ? (
+                            {logoSrc ? (
                                 <img
-                                    src={logoBase64 || logoUrl!}
-                                    data-pdf-src={logoBase64 || logoUrl}
+                                    src={logoSrc}
+                                    data-pdf-src={logoSrc}
                                     alt="Logo"
-                                    crossOrigin="anonymous"
                                     className="absolute inset-0 w-full h-full object-contain p-1"
                                 />
                             ) : (

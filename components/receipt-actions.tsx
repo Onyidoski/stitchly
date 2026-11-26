@@ -8,22 +8,7 @@ import { toJpeg } from 'html-to-image'
 import jsPDF from 'jspdf'
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
-
-// Fetches an image URL and returns a base64 data URL via canvas
-async function imageUrlToDataUrl(url: string): Promise<string | null> {
-    try {
-        const response = await fetch(url, { cache: 'no-store' })
-        const blob = await response.blob()
-        return new Promise((resolve) => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.onerror = () => resolve(null)
-            reader.readAsDataURL(blob)
-        })
-    } catch {
-        return null
-    }
-}
+import { imageUrlToDataUrl, isWebKit } from "@/lib/pdf-capture"
 
 export function ReceiptActions() {
     const [downloading, setDownloading] = useState(false)
@@ -96,14 +81,27 @@ export function ReceiptActions() {
             await new Promise(resolve => setTimeout(resolve, 300))
 
             // 6. Capture as JPEG
-            const dataUrl = await toJpeg(clone, {
+            const captureOptions = {
                 quality: 0.88,
                 cacheBust: true,
                 pixelRatio: 1.5,
                 backgroundColor: '#ffffff',
                 height: clone.scrollHeight,
                 style: { overflow: 'visible' }
-            })
+            }
+
+            // iPhone/Safari (WebKit) tends to leave images (the logo) out of the FIRST capture.
+            // Render once and throw it away so the capture we keep includes them.
+            if (isWebKit()) {
+                try {
+                    await toJpeg(clone, captureOptions)
+                } catch {
+                    // the warm-up result is discarded anyway
+                }
+                await new Promise(resolve => setTimeout(resolve, 150))
+            }
+
+            const dataUrl = await toJpeg(clone, captureOptions)
 
             // 7. Clean up DOM
             document.body.removeChild(container)
