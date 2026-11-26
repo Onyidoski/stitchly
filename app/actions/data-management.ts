@@ -3,11 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 
-// Shown when Supabase refuses a delete without raising an error (RLS just
-// filters the rows out). The migration file lives in the project root.
+// Shown when Supabase refuses a delete without raising an error (row-level
+// security just filters the rows out).
 const PERMISSION_HINT =
-    'Your database may be missing delete permission on clients. ' +
-    'Run supabase_client_delete_policy_migration.sql in the Supabase SQL editor, then try again.'
+    'The database blocked the delete. Check the row-level security policies on the clients table.'
 
 export type DeleteClientResult =
     | { ok: true }
