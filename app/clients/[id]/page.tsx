@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Phone, User } from 'lucide-react'
+import { Phone, User, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { WhatsAppMessageButton } from '@/components/whatsapp-message-button'
+import { DeleteClientDialog } from '@/components/delete-client-dialog'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -121,12 +123,24 @@ export default async function ClientDetailsPage({ params }: PageProps) {
                         </div>
                     </div>
                 </div>
-                <WhatsAppMessageButton
-                    phone={client.phone}
-                    context={clientWhatsAppContext}
-                    label="Message on WhatsApp"
-                    className="w-full sm:w-auto"
-                />
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                    <WhatsAppMessageButton
+                        phone={client.phone}
+                        context={clientWhatsAppContext}
+                        label="Message on WhatsApp"
+                        className="w-full sm:w-auto"
+                    />
+                    <DeleteClientDialog
+                        client={{ id: client.id, name: client.name }}
+                        redirectTo="/clients"
+                        trigger={
+                            <Button variant="outline" className="w-full sm:w-auto text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                                Delete Client
+                            </Button>
+                        }
+                    />
+                </div>
             </div>
 
             <Tabs defaultValue="orders" className="space-y-4">

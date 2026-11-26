@@ -21,6 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EditClientSheet } from "@/components/edit-client-sheet"
+import { DeleteClientDialog } from "@/components/delete-client-dialog"
 
 interface ClientsTableProps {
     clients: any[]
@@ -139,6 +140,12 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                                         trigger={<span className="w-full cursor-pointer">Edit Details</span>}
                                                     />
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+                                                    <DeleteClientDialog
+                                                        client={client}
+                                                        trigger={<span className="w-full cursor-pointer">Delete Client</span>}
+                                                    />
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -188,6 +195,12 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                                                     <EditClientSheet
                                                         client={client}
                                                         trigger={<span className="w-full cursor-pointer">Edit Details</span>}
+                                                    />
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+                                                    <DeleteClientDialog
+                                                        client={client}
+                                                        trigger={<span className="w-full cursor-pointer">Delete Client</span>}
                                                     />
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
