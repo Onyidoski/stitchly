@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SettingsForm } from '@/components/settings-form'
 import { NotificationManager } from '@/components/notification-manager'
 import { ThemeSelector } from '@/components/theme-selector' // [1] Import ThemeSelector
+import { ClearAllDataButton } from '@/components/clear-all-data-button'
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -79,6 +80,29 @@ export default async function SettingsPage() {
                                 </p>
                             </div>
                             <ThemeSelector />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 4. DANGER ZONE */}
+                <Card className="border-destructive/50">
+                    <CardHeader>
+                        <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                        <CardDescription>
+                            Irreversible actions. Be careful.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-destructive/30 rounded-lg bg-card">
+                            <div className="space-y-0.5">
+                                <h3 className="font-medium text-base">Clear all data</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Delete all clients, orders, invoices, receipts, measurements and
+                                    expenses so you can start afresh. Your business profile and
+                                    bank details are kept.
+                                </p>
+                            </div>
+                            <ClearAllDataButton />
                         </div>
                     </CardContent>
                 </Card>
